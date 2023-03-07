@@ -1,3 +1,4 @@
+import wandb
 from tqdm import tqdm
 from source.datasets import get_dataloaders
 from source.losses import get_loss
@@ -41,6 +42,8 @@ class Trainer:
         model = get_model(config['model'])
         self.model = model.to(self.device)
         summary(model, input_size=(3, 224, 224), device=self.device)
+        num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        wandb.log({"num_params": num_params})
         self.optimizer = get_optimizer(config['optimizer'], self.model)
         self.scheduler = get_scheduler(config['scheduler'], self.optimizer, len(self.train_dl),
                                        n_epochs=self.n_epochs) if "scheduler" in config.keys() else None
