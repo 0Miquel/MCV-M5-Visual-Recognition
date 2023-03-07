@@ -1,9 +1,7 @@
 model_name: CustomResnet
 settings:
-  pretrained: False
-  fine_tune: True  # if fine_tuning is False, then use transfer_learning (freeze all layers except output layer)
-  n_classes: 8
-  n_blocks: 2
-  input_channels: 3
-  channels: 8
+  num_classes: 8
+  num_layers: 10
+  img_channels: 3
+  in_channels: 8
   dropout_rate: 0.3

@@ -10,6 +10,7 @@ from source.utils.plots import *
 import math
 import time
 from omegaconf import OmegaConf
+from torchsummary import summary
 
 
 def train(wandb_name=None, cfg=None):
@@ -41,6 +42,7 @@ class Trainer:
         self.loss = get_loss(config['loss'])
         model = get_model(config['model'])
         self.model = model.to(self.device)
+        summary(self.model, input_size=(3, 224, 224), device=self.device)
         self.optimizer = get_optimizer(config['optimizer'], self.model)
         self.scheduler = get_scheduler(config['scheduler'], self.optimizer, len(self.train_dl),
                                        n_epochs=self.n_epochs) if "scheduler" in config.keys() else None
