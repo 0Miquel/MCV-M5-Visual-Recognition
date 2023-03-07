@@ -1,9 +1,9 @@
-# from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
+
+
 import torch.optim.lr_scheduler as lr_scheduler
-from omegaconf import OmegaConf,open_dict
 
 
-def get_scheduler(config, optimizer, steps_per_epoch, n_epochs):
+def get_scheduler(config, optimizer, steps_per_epoch=None, n_epochs=None):
     scheduler_name = config["scheduler_name"]
     settings = config["settings"]
     if scheduler_name == "OneCycleLR":
@@ -14,7 +14,9 @@ def get_scheduler(config, optimizer, steps_per_epoch, n_epochs):
     try:
         scheduler = getattr(lr_scheduler, scheduler_name)(optimizer, **settings)
     except AttributeError:
-        raise f"Scheduler with name {scheduler_name} not found"
+        try:
+            scheduler = globals()[scheduler_name](optimizer, **settings)
+        except KeyError:
+            raise f"Scheduler with name {scheduler_name} not found"
 
     return scheduler
-

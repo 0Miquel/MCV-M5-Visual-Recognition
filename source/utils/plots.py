@@ -76,3 +76,5 @@ def classificiation_table(inputs, outputs, targets, labels):
 
     return table
 
+
+

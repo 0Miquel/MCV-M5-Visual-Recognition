@@ -1,7 +1,7 @@
 import wandb
 from omegaconf import DictConfig
 from omegaconf import OmegaConf
-from source.utils.plots import *
+from source.utils import *
 
 
 def get_logger(cfg, wandb_name):
@@ -24,6 +24,7 @@ class Logger:
             self.cfg = nested_dict(config)
 
         self.labels = self.cfg["dataset"]["settings"]["labels"]
+        self.labels = {i: label for i, label in enumerate(self.labels)}
         self.task = self.cfg["trainer"]["task"]
         self.logs = {}
 

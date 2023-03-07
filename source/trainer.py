@@ -1,12 +1,10 @@
 from tqdm import tqdm
-from source.dataset import *
-from source.loss import *
-from source.model import *
-from source.optimizer import *
-from source.scheduler import *
-from source.logger import *
-from source.utils.metrics import *
-from source.utils.plots import *
+from source.datasets import get_dataloaders
+from source.losses import get_loss
+from source.models import get_model
+from source.optimizers import get_optimizer
+from source.schedulers import get_scheduler
+from source.utils import *
 import math
 import time
 from omegaconf import OmegaConf
@@ -42,7 +40,7 @@ class Trainer:
         self.loss = get_loss(config['loss'])
         model = get_model(config['model'])
         self.model = model.to(self.device)
-        summary(self.model, input_size=(3, 224, 224), device=self.device)
+        # summary(self.model, input_size=(3, 224, 224), device=self.device)
         self.optimizer = get_optimizer(config['optimizer'], self.model)
         self.scheduler = get_scheduler(config['scheduler'], self.optimizer, len(self.train_dl),
                                        n_epochs=self.n_epochs) if "scheduler" in config.keys() else None
@@ -68,7 +66,7 @@ class Trainer:
                 self.optimizer.step()
                 if self.scheduler is not None:
                     self.scheduler.step()
-                # compute metrics for this epoch + current lr and loss
+                # compute metrics for this epoch +  current lr and loss
                 metrics = compute_metrics(self.metrics, outputs, targets, inputs, loss, self.optimizer)
                 tepoch.set_postfix(**metrics)
         if self.log:

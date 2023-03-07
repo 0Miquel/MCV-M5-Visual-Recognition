@@ -1,3 +1,5 @@
+
+
 import torch.optim as optim
 
 
@@ -8,6 +10,9 @@ def get_optimizer(config, model):
     try:
         optimizer = getattr(optim, optimizer_name)(model.parameters(), **settings)
     except AttributeError:
-        raise f"Optimizer with name {optimizer_name} not found"
+        try:
+            optimizer = globals()[optimizer_name](model.parameters(), **settings)
+        except KeyError:
+            raise f"Optimizer with name {optimizer_name} not found"
 
     return optimizer

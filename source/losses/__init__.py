@@ -1,3 +1,5 @@
+
+
 import torch.nn as nn
 import segmentation_models_pytorch.losses as smp_losses
 
@@ -17,12 +19,3 @@ def get_loss(config):
                 raise f"Loss with name {loss_name} not found"
 
     return loss
-
-
-class MyLoss(nn.Module):
-    def __init__(self):
-        super(MyLoss, self).__init__()
-        pass
-
-    def forward(self, x, target):
-        pass
