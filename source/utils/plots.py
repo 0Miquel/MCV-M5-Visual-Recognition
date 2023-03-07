@@ -51,16 +51,28 @@ def segmentation_table(inputs, outputs, targets, labels):
 
 
 def classificiation_table(inputs, outputs, targets, labels):
-    table = wandb.Table(columns=["Input", "Prediction", "Ground truth"])
+    table = wandb.Table(columns=["Input", "Prediction", "Ground truth", "Probabilities"])
+    outputs = nn.Softmax(dim=1)(outputs)
     for img, output, target in zip(inputs, outputs, targets):
         img = img.permute((1, 2, 0)).cpu().detach().numpy().astype("uint8")
         img = wandb.Image(img)
         output_label = labels[torch.argmax(output).item()]
         target_label = labels[torch.argmax(target).item()]
 
-        table.add_data(img, output_label, target_label)
+        # create the bar chart
+        fig, ax = plt.subplots(figsize=(10, 10))
+        max_idx = torch.argmax(output)
+        bar_colors = ['g' if i == max_idx and output_label == target_label
+                      else 'r' if i == max_idx and output_label != target_label else 'b' for i in range(len(labels))]
+        ax.bar([*labels.values()], output.cpu().detach().numpy(), color=bar_colors)
+        ax.set_ylabel('Probability')
+        ax.set_title('Class Probabilities')
+        ax.tick_params(axis='x', rotation=90)
+
+        # save the chart as a WandB plot
+        probabilities = wandb.Image(fig)
+        plt.close(fig)
+        table.add_data(img, output_label, target_label, probabilities)
 
     return table
-
-
 
