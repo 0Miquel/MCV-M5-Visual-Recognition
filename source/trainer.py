@@ -66,7 +66,7 @@ class Trainer:
                 self.optimizer.step()
                 if self.scheduler is not None:
                     self.scheduler.step()
-                # compute metrics for this epoch +  current lr and loss
+                # compute metrics for this epoch + current lr and loss
                 metrics = compute_metrics(self.metrics, outputs, targets, inputs, loss, self.optimizer)
                 tepoch.set_postfix(**metrics)
         if self.log:

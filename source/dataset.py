@@ -65,7 +65,7 @@ class FolderDataset(Dataset):
         if path[-1] != "/":
             path = path + "/"
         self.img_paths = glob.glob(path + "*/*")
-        self.img_paths = [path.replace("\\", "/") for path in self.img_paths]  # for Windows
+        self.img_paths = [path.replace("\\", "/") for path in self.img_paths]  # for Windows OS
         self.labels = [path.split("/")[-2] for path in self.img_paths]
 
         self.id2labels = settings["labels"]
