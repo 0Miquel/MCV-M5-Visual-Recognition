@@ -9,7 +9,7 @@ import torch.nn as nn
 from abc import ABC
 import sklearn
 import cv2
-
+import time
 
 def plot_segmentation_batch(y_pred, y_true, thr=0.5):
     y_pred = nn.Sigmoid()(y_pred)
@@ -59,11 +59,12 @@ def classification_table(inputs, outputs, targets, labels, grad_cams: np.ndarray
         img = img.permute((1, 2, 0)).cpu().detach().numpy().astype("uint8")
 
         # create the grad-cam image
-        heatmap = cv2.resize(grad_cam.permute((1, 2, 0)).cpu().detach().numpy(), (img.shape[1], img.shape[0]))
+        heatmap = cv2.resize(grad_cam.cpu().detach().numpy(), (img.shape[1], img.shape[0]))
+        heatmap = heatmap / np.max(heatmap)  # normalize between 0 and 1
         heatmap = np.uint8(255 * heatmap)
-        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)[:, :, ::-1]
 
-        superimposed_img = heatmap * 0.4 + img
+        superimposed_img = cv2.addWeighted(img, 0.6, heatmap, 0.4, 0)
 
         superimposed_img = wandb.Image(superimposed_img)
         img = wandb.Image(img)
@@ -79,7 +80,6 @@ def classification_table(inputs, outputs, targets, labels, grad_cams: np.ndarray
         ax.set_ylabel('Probability')
         ax.set_title('Class Probabilities')
         ax.tick_params(axis='x', rotation=90)
-
         # save the chart as a WandB plot
         probabilities = wandb.Image(fig)
         plt.close(fig)
