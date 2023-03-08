@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 import wandb
 import pandas as pd
@@ -50,11 +52,20 @@ def segmentation_table(inputs, outputs, targets, labels):
     return table
 
 
-def classificiation_table(inputs, outputs, targets, labels):
-    table = wandb.Table(columns=["Input", "Prediction", "Ground truth", "Probabilities"])
+def classification_table(inputs, outputs, targets, labels, grad_cams: np.ndarray = None):
+    table = wandb.Table(columns=["Input", "Grad-CAM", "Prediction", "Ground truth", "Probabilities"])
     outputs = nn.Softmax(dim=1)(outputs)
-    for img, output, target in zip(inputs, outputs, targets):
+    for img, output, target, grad_cam in zip(inputs, outputs, targets, grad_cams):
         img = img.permute((1, 2, 0)).cpu().detach().numpy().astype("uint8")
+
+        # create the grad-cam image
+        heatmap = cv2.resize(grad_cam.permute((1, 2, 0)).cpu().detach().numpy(), (img.shape[1], img.shape[0]))
+        heatmap = np.uint8(255 * heatmap)
+        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+
+        superimposed_img = heatmap * 0.4 + img
+
+        superimposed_img = wandb.Image(superimposed_img)
         img = wandb.Image(img)
         output_label = labels[torch.argmax(output).item()]
         target_label = labels[torch.argmax(target).item()]
@@ -72,7 +83,7 @@ def classificiation_table(inputs, outputs, targets, labels):
         # save the chart as a WandB plot
         probabilities = wandb.Image(fig)
         plt.close(fig)
-        table.add_data(img, output_label, target_label, probabilities)
+        table.add_data(img, superimposed_img, output_label, target_label, probabilities)
 
     return table
 

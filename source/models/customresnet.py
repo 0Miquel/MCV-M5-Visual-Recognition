@@ -57,6 +57,7 @@ class CustomResnet(nn.Module):
     ) -> None:
         super(CustomResnet, self).__init__()
 
+        self.gradients = None
         img_channels = settings["img_channels"]
         num_layers = settings["num_layers"]
 
@@ -138,17 +139,36 @@ class CustomResnet(nn.Module):
             ))
         return nn.Sequential(*layers)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def encoder(self, x: Tensor) -> Tensor:
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
         for layer in self.layers:
             x = layer(x)
+        return x
+    
+    # hook for the gradients of the activations
+    def activations_hook(self, grad):
+        self.gradients = grad
+    
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.encoder(x)
         # The spatial dimension of the final layer's feature
         # map should be (7, 7) for all ResNets.
         # print('Dimensions of the last convolutional feature map: ', x.shape)
+        # register the hook
+        if x.requires_grad:
+            h = x.register_hook(self.activations_hook)
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
+
+    # method for the gradient extraction
+    def get_activations_gradient(self):
+        return self.gradients
+
+    # method for the activation extraction
+    def get_activations(self, x):
+        return self.encoder(x)

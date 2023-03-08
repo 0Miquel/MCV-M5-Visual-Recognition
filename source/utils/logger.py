@@ -1,3 +1,4 @@
+import numpy as np
 import wandb
 from omegaconf import DictConfig
 from omegaconf import OmegaConf
@@ -28,13 +29,13 @@ class Logger:
         self.task = self.cfg["trainer"]["task"]
         self.logs = {}
 
-    def add(self, og_imgs, outputs, targets, metrics, phase):
+    def add(self, og_imgs, outputs, targets, metrics, phase, grad_cam: np.ndarray = None):
         self.logs[phase] = metrics
         if self.task == "segmentation" and not self.sweep:
             table = segmentation_table(og_imgs, outputs, targets, self.labels)
             self.logs[phase+"_results"] = table
         elif self.task == "classification" and not self.sweep:
-            table = classificiation_table(og_imgs, outputs, targets, self.labels)
+            table = classification_table(og_imgs, outputs, targets, self.labels, grad_cam)
             self.logs[phase+"_results"] = table
 
     def upload(self):
