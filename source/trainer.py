@@ -75,6 +75,8 @@ class Trainer:
                 # compute metrics for this epoch +  current lr and loss
                 metrics = compute_metrics(self.metrics, outputs, targets, inputs, loss, self.optimizer)
                 tepoch.set_postfix(**metrics)
+        if self.log:
+            self.logger.logs["train"] = metrics
         return metrics["loss"]
 
     def val_epoch(self, epoch):
@@ -100,7 +102,7 @@ class Trainer:
             outputs = self.model(inputs)
             # loss
             self.loss(outputs, targets)
-            grad_cams = self.get_grad_cam(inputs) if self.grad_cam else None
+            grad_cams = get_grad_cam(self.grad_cam, self.model, inputs) if self.grad_cam else None
             self.logger.add(og_imgs, outputs, targets, metrics, "val", grad_cam=grad_cams)
         return metrics["loss"]
 
@@ -116,34 +118,9 @@ class Trainer:
             if self.log:
                 self.logger.upload()
         time_elapsed = time.time() - since
+
         print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
         if self.log:
             self.logger.log_model(self.model_path)
             self.logger.finish()
-
-    def get_grad_cam(self, x: torch.Tensor) -> np.ndarray:
-        """
-        Computes the grad cam for the given input. Assumes a batch of data.
-        Extracted from: https://medium.com/@stepanulyanin/implementing-grad-cam-in-pytorch-ea0937c31e82
-        :param x: input tensor (batch_size, channels, height, width)
-        :return: grad cam (batch_size, height, width)
-        """
-        assert self.grad_cam, "Grad cam is not enabled"
-        # pull the gradients out of the model
-        gradients = self.model.get_activations_gradient()
-        # pool the gradients across the channels
-        pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
-        # get the activations of the last convolutional layer
-        activations = self.model.get_activations(x).detach()
-        # weight the channels by corresponding gradients
-        for i in range(activations.shape[1]):
-            activations[:, i, :, :] *= pooled_gradients[i]
-        # average the channels of the activations
-        heatmap = torch.mean(activations, dim=1).squeeze()
-        # relu on top of the heatmap
-        # expression (2) in https://arxiv.org/pdf/1610.02391.pdf
-        heatmap = np.maximum(heatmap.cpu(), 0)
-        # normalize the heatmap
-        heatmap /= torch.max(heatmap)
-        return heatmap
 
