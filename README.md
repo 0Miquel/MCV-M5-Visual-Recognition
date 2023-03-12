@@ -36,10 +36,11 @@ the experiment
 
 All the arguments are necessary.
 
-
 ### Power Point Presentation
-In the following link you can find the visualization drive power point of our group presentation:
+In the following link you can find the read-only Google Slides presentation for this week:
 https://docs.google.com/presentation/d/1whdoAJ6VHrrJ_RWEamB2IAcLW70gui0yw31goTlhJck/edit?usp=sharing
+
+
 ## Week 2 & 3
 TODO
 
