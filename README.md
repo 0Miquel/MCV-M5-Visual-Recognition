@@ -9,9 +9,6 @@ Group 2 project of Visual Recognition at the Master in Computer Vision from UAB.
 In the following link you can find the visualization latex report of our group 2:
 https://www.overleaf.com/read/jhvhctdhpxkp
 
-## Power Point Presentation
-In the following link you can find the visualization drive power point of our group 2:
-https://docs.google.com/presentation/d/1whdoAJ6VHrrJ_RWEamB2IAcLW70gui0yw31goTlhJck/edit?usp=sharing
 
 ## Week 1
 ### Train
@@ -38,6 +35,11 @@ python main_sweep.py --sweep=<sweep_file> --sweep_count=<n_runs> --wandb_name=<w
 the experiment
 
 All the arguments are necessary.
+
+
+### Power Point Presentation
+In the following link you can find the visualization drive power point of our group presentation:
+https://docs.google.com/presentation/d/1whdoAJ6VHrrJ_RWEamB2IAcLW70gui0yw31goTlhJck/edit?usp=sharing
 ## Week 2 & 3
 TODO
 
