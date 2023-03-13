@@ -1,13 +1,10 @@
-from typing import Union, Dict
-
 import wandb
 from tqdm import tqdm
-from source.datasets import get_dataloaders
-from source.losses import get_loss
-from source.models import get_model
-from source.optimizers import get_optimizer
-from source.schedulers import get_scheduler
-from source.utils import *
+from week1.source.datasets import get_dataloaders
+from week1.source.losses import get_loss
+from week1.source.models import get_model
+from week1.source.optimizers import get_optimizer
+from week1.source.schedulers import get_scheduler
 import math
 import time
 from omegaconf import OmegaConf

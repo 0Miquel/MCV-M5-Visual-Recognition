@@ -1,8 +1,6 @@
 import numpy as np
 import wandb
-from omegaconf import DictConfig
 from omegaconf import OmegaConf
-from source.utils import *
 
 
 def get_logger(cfg, wandb_name):

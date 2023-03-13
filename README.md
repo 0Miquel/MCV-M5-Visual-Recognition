@@ -14,6 +14,7 @@ https://www.overleaf.com/read/jhvhctdhpxkp
 ### Train
 CLI command to run a training experiment.
 ```
+cd week1
 python main.py --config_name=<config_name> --wandb_name=<wandb_project_name>
 ```
 - ``--config_name``: Name of .yaml file that specifies the config files 
@@ -27,6 +28,7 @@ not be logged into WandB, in case you are not interested in tracking that run.
 ### Hyperparameter search (WandB sweep)
 CLI command to run a hyperparameter search experiment.
 ```
+cd week1
 python main_sweep.py --sweep=<sweep_file> --sweep_count=<n_runs> --wandb_name=<wandb_project_name>
 ```
 - ``--sweep``: Name of the sweep file inside the ``sweeps`` folder to be used (e.g. sweep.yaml)
