@@ -9,7 +9,9 @@ def get_kitti_dataset(path, phase):
     sequences = path+"training/image_02"
 
     instances = glob.glob(instances+"/*.txt")
+    instances = sorted(instances, key=lambda x: x[-8:])
     sequences = glob.glob(sequences+"/*")
+    sequences = sorted(sequences, key=lambda x: x[-5:])
 
     dataset_dicts = []
     image_id = 0
