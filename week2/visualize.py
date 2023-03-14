@@ -13,7 +13,7 @@ def visualize_data():
     kitti_metadata = MetadataCatalog.get("kitti_train")
 
     dataset_dicts = get_kitti_dataset("../dataset/KITTI-MOTS/", "train")
-    for d in random.sample(dataset_dicts, 5):
+    for d in random.sample(dataset_dicts, 10):
         img = cv2.imread(d["file_name"])
         visualizer = Visualizer(img[:, :, ::-1], metadata=kitti_metadata, scale=0.5)
         out = visualizer.draw_dataset_dict(d)
