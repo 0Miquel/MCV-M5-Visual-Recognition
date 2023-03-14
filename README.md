@@ -43,9 +43,14 @@ In the following link you can find the read-only Google Slides presentation for 
 https://docs.google.com/presentation/d/1whdoAJ6VHrrJ_RWEamB2IAcLW70gui0yw31goTlhJck/edit?usp=sharing
 
 
-## Week 2 & 3
+## Week 2 
 TODO
 
+### Power Point Presentation
+In the following link you can find the read-only Google Slides presentation for this week:
+https://docs.google.com/presentation/d/1NJRXlq7O_Mx9ZrNx00Bv-KhJWc3BFqJDpFG89rfuhj0/edit?usp=sharing
+
+## Week 2 & 3
 ## Week 4
 TODO
 
