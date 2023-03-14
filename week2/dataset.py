@@ -19,6 +19,7 @@ def get_kitti_dataset(path, phase):
         # iterate over sequences
         annotations = load_txt(instance)
         images = glob.glob(sequence+"/*.png")
+        images = sorted(images, key=lambda x: x[-8:])
 
         for idx, annotation in annotations.items():
             # iterate over images in sequence

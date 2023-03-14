@@ -36,7 +36,7 @@ def main():
 
         visualizer = Visualizer(img[:, :, ::-1], metadata=kitti_metadata, scale=0.5)
         out = visualizer.draw_dataset_dict(d)
-        plt.figure(figsize=(15,7))
+        plt.figure(figsize=(15, 7))
         plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
         plt.title("Ground truth")
         plt.show()
