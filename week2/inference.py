@@ -19,19 +19,28 @@ def inference():
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
     cfg.MODEL.DEVICE = "cuda"
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
+    # cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
     # cfg.INPUT.MASK_FORMAT = "bitmask"
 
     predictor = DefaultPredictor(cfg)
 
     dataset_dicts = get_kitti_dataset("../dataset/KITTI-MOTS/", "train")
+
+    coco_metadata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
+    coco_labels = coco_metadata.thing_classes
+    retain = [coco_labels.index("car"), coco_labels.index("person")]
+
     for d in random.sample(dataset_dicts, 10):
         img = cv2.imread(d["file_name"])
         predictions = predictor(img)
-        visualizer = Visualizer(img[:, :, ::-1], metadata=kitti_metadata, scale=0.5)
-        out = visualizer.draw_instance_predictions(predictions["instances"].to("cpu"))
+        visualizer = Visualizer(img[:, :, ::-1], metadata=coco_metadata, scale=0.5)
+
+        instances = predictions["instances"]
+        kitti_instances = instances[(instances.pred_classes == retain[0]) | (instances.pred_classes == retain[1])]
+
+        out = visualizer.draw_instance_predictions(kitti_instances.to("cpu"))
         plt.figure(figsize=(15, 7))
         plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
         plt.show()
