@@ -131,3 +131,7 @@ def write_sequence(frames, path):
       for obj in objects:
         print(t, obj.track_id, obj.class_id, obj.mask["size"][0], obj.mask["size"][1],
               obj.mask["counts"].decode(encoding='UTF-8'), file=f)
+
+
+# a=load_image("../dataset/KITTI-MOTS/instances/0000/000000.png")
+# print("hi")

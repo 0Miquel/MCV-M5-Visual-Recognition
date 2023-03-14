@@ -1,34 +1,48 @@
 from detectron2.structures import BoxMode
-from detectron2.data import MetadataCatalog, DatasetCatalog
-import os
-import glob
-from io2 import *
+from io_kitti import *
+import pycocotools.mask as maskUtils
+import cv2
 
 
-def get_kitti_dataset(path):
+def get_kitti_dataset(path, phase):
     instances = path+"instances_txt"
     sequences = path+"training/image_02"
 
     instances = glob.glob(instances+"/*.txt")
     sequences = glob.glob(sequences+"/*")
 
+    dataset_dicts = []
+    image_id = 0
     for instance, sequence in zip(instances, sequences):
-        annotations = open(instance, "r").readlines()
+        # iterate over sequences
+        annotations = load_txt(instance)
         images = glob.glob(sequence+"/*.png")
 
-        for annotation in annotations:
-            split_annotation = annotation.split(" ")
-            image_id = int(split_annotation[0])
-            image = images[image_id]
+        for idx, annotation in annotations.items():
+            # iterate over images in sequence
+            record = {}
 
+            image_filename = images[idx]
+            height, width = cv2.imread(image_filename).shape[:2]
 
-# for d in ["train", "val"]:
-#     DatasetCatalog.register("kitti_" + d, get_kitti_dataset("../dataset/KITTI-MOTS/"))
-#     MetadataCatalog.get("kitti_" + d).set(thing_classes=['Car', 'Van', 'Truck', 'Pedestrian', 'Person_sitting',
-#                                                          'Cyclist', 'Tram', 'Misc', 'DontCare'])
-# kitti_metadata = MetadataCatalog.get("kitti_train")
+            record["file_name"] = image_filename
+            record["image_id"] = image_id
+            image_id += 1
+            record["height"] = height
+            record["width"] = width
 
-
-annotations = load_sequences("../dataset/KITTI-MOTS/instances_txt", [str(a).zfill(4) for a in range(21)])
-images = load_sequences("../dataset/KITTI-MOTS/training/image_02", [str(a).zfill(4) for a in range(21)])
-print("Hi")
+            objs = []
+            for v in annotation:
+                if v.class_id != 10:
+                    bbox = maskUtils.toBbox(v.mask).tolist()
+                    # iterate over annotations in image
+                    obj = {
+                        "bbox": bbox,
+                        "bbox_mode": BoxMode.XYWH_ABS,
+                        "segmentation": v.mask,
+                        "category_id": v.class_id-1
+                    }
+                    objs.append(obj)
+            record["annotations"] = objs
+            dataset_dicts.append(record)
+    return dataset_dicts

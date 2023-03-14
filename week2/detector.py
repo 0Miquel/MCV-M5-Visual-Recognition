@@ -31,3 +31,6 @@ class Detector:
 
         cv2.imshow("Result", out.get_image()[..., ::-1])
         cv2.waitKey(0)
+
+detector = Detector("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
+detector.inference("./input.jpg")
