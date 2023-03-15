@@ -15,11 +15,12 @@ import argparse
 import sys
 from utils import *
 
+
 def main(config, wandb_name):
     # Register and get KITTI dataset
     for phase in ["train", "val"]:
         DatasetCatalog.register("kitti_" + phase, lambda phase=phase: get_kitti_dataset(config["dataset_path"], phase))
-        MetadataCatalog.get("kitti_" + phase).set(thing_classes=['Car', 'Pedestrian'])
+        MetadataCatalog.get("kitti_" + phase).set(thing_classes=['car', 'person'])
     kitti_metadata = MetadataCatalog.get("kitti_train")
     if not config["bool_evaluate"]:
         dataset_dicts = get_kitti_dataset(config["dataset_path"], "train")
@@ -63,44 +64,9 @@ def main(config, wandb_name):
 
     if config["bool_evaluate"]:
         #Evaluation
-        evaluator = COCOEvaluator("kitti_train", output_dir="./output")
+        evaluator = COCOEvaluator("kitti_train", cfg, False, output_dir="./output")
         val_loader = build_detection_test_loader(cfg, "kitti_train")
         print(inference_on_dataset(predictor.model, val_loader, evaluator))
-    #
-    # if config["bool_evaluate"]:
-    #     # Get mapping between KITTI classes and COCO classes
-    #     coco_metadata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
-    #     coco_labels = coco_metadata.thing_classes
-    #     retain = [coco_labels.index("car"), coco_labels.index("person")]
-    #
-    #     kitti_metadata = MetadataCatalog.get("kitti_train")
-    #     kitti_labels = kitti_metadata.thing_classes
-    #
-    #     mapping = []
-    #     for kitti_label in kitti_labels:
-    #         if kitti_label == "Car":
-    #             mapping.append(retain[0])
-    #         elif kitti_label == "Pedestrian":
-    #             mapping.append(retain[1])
-    #         else:
-    #             mapping.append(-1)
-    #
-    #     # Create evaluator and run inference on validation set
-    #     evaluator = COCOEvaluator("kitti_val", cfg, False, output_dir="./output")
-    #     val_loader = build_detection_test_loader(cfg, "kitti_val")
-    #     predictions = inference_on_dataset(predictor.model, val_loader, evaluator)
-    #
-    #     # Map predicted classes to KITTI classes
-    #     for prediction in predictions:
-    #         for annotation in prediction["instances"].to(torch.device("cpu")):
-    #             old_class = annotation.pred_classes[0].item()
-    #             new_class = mapping[old_class]
-    #             annotation.pred_classes[0] = new_class
-    #     evaluator.reset()
-    #     evaluator.process(dataset_dicts, predictions)
-    #
-    #     # Print evaluation results
-    #     print(evaluator.evaluate())
 
 
 if __name__ == "__main__":
