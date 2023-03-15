@@ -8,8 +8,19 @@ from detectron2.config import get_cfg
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
 
+import argparse
+import sys
+from yaml.loader import SafeLoader
+import yaml
 
-def main():
+
+def load_yaml_config(path):
+    with open(path) as f:
+        data = yaml.load(f, Loader=SafeLoader)
+    return data
+
+
+def main(config, wandb_name):
     # Register and get KITTI dataset
     for d in ["train", "val"]:
         DatasetCatalog.register("kitti_" + d, lambda d=d: get_kitti_dataset("../dataset/KITTI-MOTS/", d))
@@ -53,4 +64,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="config/config_taskc.yaml")
+    parser.add_argument("--wandb_name", default="M5-Week2")
+    args = parser.parse_args(sys.argv[1:])
+
+    config_path = args.config
+    wandb_name = args.wandb_name
+
+    config = load_yaml_config(config_path)
+
+    main(config, wandb_name)
