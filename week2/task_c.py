@@ -10,28 +10,20 @@ from detectron2.engine import DefaultPredictor
 
 import argparse
 import sys
-from yaml.loader import SafeLoader
-import yaml
-
-
-def load_yaml_config(path):
-    with open(path) as f:
-        data = yaml.load(f, Loader=SafeLoader)
-    return data
-
+from utils import *
 
 def main(config, wandb_name):
     # Register and get KITTI dataset
-    for d in ["train", "val"]:
-        DatasetCatalog.register("kitti_" + d, lambda d=d: get_kitti_dataset("../dataset/KITTI-MOTS/", d))
-        MetadataCatalog.get("kitti_" + d).set(thing_classes=['Car', 'Pedestrian'])
+    for phase in ["train", "val"]:
+        DatasetCatalog.register("kitti_" + phase, lambda phase=phase: get_kitti_dataset(config["dataset_path"], phase))
+        MetadataCatalog.get("kitti_" + phase).set(thing_classes=['Car', 'Pedestrian'])
     kitti_metadata = MetadataCatalog.get("kitti_train")
-    dataset_dicts = get_kitti_dataset("../dataset/KITTI-MOTS/", "train")
+    dataset_dicts = get_kitti_dataset(config["dataset_path"], "train")
 
     # Create Predictor
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
+    cfg.merge_from_file(model_zoo.get_config_file(config["model_path"]))
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(config["model_path"])
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7  # confidence threshold
     cfg.MODEL.DEVICE = "cuda"
     predictor = DefaultPredictor(cfg)
@@ -42,16 +34,18 @@ def main(config, wandb_name):
     retain = [coco_labels.index("car"), coco_labels.index("person")]
 
     # visualize KITTI-MOTS ground truth and predictions
-    for d in random.sample(dataset_dicts, 10):
-        img = cv2.imread(d["file_name"])
+    for sample in random.sample(dataset_dicts, 10):
+        img = cv2.imread(sample["file_name"])
 
+        #Ground truth
         visualizer = Visualizer(img[:, :, ::-1], metadata=kitti_metadata, scale=0.5)
-        out = visualizer.draw_dataset_dict(d)
+        out = visualizer.draw_dataset_dict(sample)
         plt.figure(figsize=(15, 7))
         plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
         plt.title("Ground truth")
         plt.show()
 
+        #Predictions
         predictions = predictor(img)
         visualizer = Visualizer(img[:, :, ::-1], metadata=coco_metadata, scale=0.5)
         instances = predictions["instances"]
@@ -66,7 +60,7 @@ def main(config, wandb_name):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="config/config_taskc.yaml")
-    parser.add_argument("--wandb_name", default="M5-Week2")
+    parser.add_argument("--wandb_name", default=None)
     args = parser.parse_args(sys.argv[1:])
 
     config_path = args.config
