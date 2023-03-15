@@ -7,6 +7,8 @@ import random
 from detectron2.config import get_cfg
 from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
+from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+from detectron2.data import build_detection_test_loader
 
 import argparse
 import sys
@@ -55,6 +57,11 @@ def main(config, wandb_name):
         plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
         plt.title("Predicted")
         plt.show()
+
+    #Evaluation
+    evaluator = COCOEvaluator("kitti_val", output_dir="./output")
+    val_loader = build_detection_test_loader(cfg, "kitti_val")
+    print(inference_on_dataset(predictor.model, val_loader, evaluator))
 
 
 if __name__ == "__main__":
