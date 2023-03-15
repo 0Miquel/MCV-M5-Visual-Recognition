@@ -15,6 +15,18 @@ def get_kitti_dataset(path, phase):
 
     dataset_dicts = []
     image_id = 0
+    # Sequences 2, 6, 7, 8, 10, 13, 14, 16 and 18 were chosen for the validation set,
+    # the remaining sequences for the training set.
+    # Following the idea of the paper and slides https://arxiv.org/pdf/1902.03604.pdf
+    train_sequences = [sequence for i, sequence in enumerate(sequences) if i not in [2, 6, 7, 8, 10, 13, 14, 16, 18]]
+    val_sequences = [sequences[i] for i in [2, 6, 7, 8, 10, 13, 14, 16, 18]]
+
+    train_instances = [instance for i, instance in enumerate(instances) if i not in [2, 6, 7, 8, 10, 13, 14, 16, 18]]
+    val_instances = [instances[i] for i in [2, 6, 7, 8, 10, 13, 14, 16, 18]]
+
+    sequences = train_sequences if phase == "train" else val_sequences
+    instances = train_instances if phase == "train" else val_instances
+
     for instance, sequence in zip(instances, sequences):
         # iterate over sequences
         annotations = load_txt(instance)

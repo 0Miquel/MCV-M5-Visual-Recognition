@@ -14,9 +14,9 @@ import wandb
 def finetune():
     # wandb.init(sync_tensorboard=True)
 
-    for d in ["train", "val"]:
-        DatasetCatalog.register("kitti_" + d, lambda d=d: get_kitti_dataset("../dataset/KITTI-MOTS/", d))
-        MetadataCatalog.get("kitti_" + d).set(thing_classes=['Car', 'Pedestrian'])
+    for phase in ["train", "val"]:
+        DatasetCatalog.register("kitti_" + phase, lambda phase=phase: get_kitti_dataset("../dataset/KITTI-MOTS/", phase))
+        MetadataCatalog.get("kitti_" + phase).set(thing_classes=['Car', 'Pedestrian'])
 
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
