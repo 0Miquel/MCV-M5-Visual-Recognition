@@ -1,0 +1,3 @@
+dataset_path: "D:/datasets_diskD/kittimots/"#"../dataset/KITTI-MOTS/"
+model_path: "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"
+bool_evaluate: True
