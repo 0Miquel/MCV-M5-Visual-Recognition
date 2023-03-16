@@ -27,8 +27,6 @@ def main(config, wandb_name):
         DatasetCatalog.register("kitti_" + phase, lambda phase=phase: get_kitti_dataset_COCO_id(config["dataset_path"], phase))
         MetadataCatalog.get("kitti_" + phase).set(thing_classes=coco_names, stuff_classes=coco_names)
     kitti_metadata_coco_ids = MetadataCatalog.get("kitti_val")
-    if not config["bool_evaluate"]:
-        dataset_dicts = get_kitti_dataset_COCO_id(config["dataset_path"], "val")
 
     # Create Predictor
     cfg = get_cfg()
@@ -41,8 +39,11 @@ def main(config, wandb_name):
     # get COCO labels that are also in KITTI
     coco_labels = kitti_metadata_coco_ids.thing_classes
     retain = [coco_labels.index("car"), coco_labels.index("person")]
+
     if not config["bool_evaluate"]:
         # visualize KITTI-MOTS ground truth and predictions
+        dataset_dicts = get_kitti_dataset_COCO_id(config["dataset_path"], "val")
+
         for sample in random.sample(dataset_dicts, 10):
             img = cv2.imread(sample["file_name"])
 
