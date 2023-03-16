@@ -1,3 +1,3 @@
-dataset_path: "../dataset/KITTI-MOTS/"
-model_path: "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml" #"COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"
-bool_evaluate: False
+dataset_path: "D:/datasets_diskD/kittimots/"#"../dataset/KITTI-MOTS/"
+model_path: "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"
+bool_evaluate: False #True to execute task d, evaluation quantitative results
