@@ -1,3 +1,5 @@
+import os
+
 from dataset import create_detectron_dataset
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.utils.visualizer import Visualizer
@@ -30,31 +32,44 @@ def main(config, wandb_name):
         dataset_dicts = create_detectron_dataset(config["dataset_path"])
 
         random.seed(42)
-        for sample in random.sample(dataset_dicts, 10):
+        for i, sample in enumerate(random.sample(dataset_dicts, 10)):
             img = cv2.imread(sample["file_name"])
 
             # Ground truth
             visualizer = Visualizer(img[:, :, ::-1],MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
             out = visualizer.draw_dataset_dict(sample)
-            plt.figure(figsize=(15, 7))
-            plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
-            plt.title("Ground truth")
-            plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
-            plt.tight_layout()
-            plt.show()
+            outimggt = out.get_image()[:, :, ::-1]
+            if config["save"]:
+                #create folder results if not already created
+                os.makedirs('results', exist_ok=True)
+                os.makedirs('results/gt', exist_ok=True)
+                cv2.imwrite(f"results/gt/outimggt_{i}.jpg", outimggt)
+            if config["plot"]:
+                plt.figure(figsize=(15, 7))
+                plt.imshow(outimggt[..., ::-1])
+                plt.title("Ground truth")
+                plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+                plt.tight_layout()
+                plt.show()
 
             # Predictions
             predictions = predictor(img)
             visualizer = Visualizer(img[:, :, ::-1],MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
             out = visualizer.draw_instance_predictions(predictions["instances"].to("cpu"))
-            plt.figure(figsize=(15, 7))
-            plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
-            plt.title("Predicted")
-            plt.tight_layout()
-            plt.show()
+            outimgpred = out.get_image()[:, :, ::-1]
+            if config["save"]:
+                os.makedirs('results/pred', exist_ok=True)
+                cv2.imwrite(f"results/pred/outimgpred_{i}.jpg", outimgpred)
+            if config["plot"]:
+                plt.figure(figsize=(15, 7))
+                plt.imshow(outimgpred[..., ::-1])
+                plt.title("Predicted")
+                plt.tight_layout()
+                plt.show()
 
     # if config["bool_evaluate"]:
     #     # Evaluate
+    #     os.makedirs('output', exist_ok=True)
     #     evaluator = COCOEvaluator("kitti_val", cfg, False, output_dir="./output")
     #     val_loader = build_detection_test_loader(cfg, "kitti_val")
     #     print(inference_on_dataset(predictor.model, val_loader, evaluator))
