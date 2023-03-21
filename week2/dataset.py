@@ -65,6 +65,7 @@ def get_kitti_dataset(path, phase):
 
 def get_kitti_dataset_COCO_id(path, phase):
     COCO_classes = {
+        0: 50,  # Background anywhere
         1: 2,  # Car to Car
         2: 0,  # Pedestrian to Person
     }

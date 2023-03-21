@@ -46,10 +46,11 @@ def main(config, wandb_name):
     dataset_dicts = get_kitti_dataset(config["dataset_path"], "val")
     kitti_metadata = MetadataCatalog.get("kitti_val")
 
-    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # load fine-tuned weights
+    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final_MASKRCNN.pth")  # load fine-tuned weights
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # confidence threshold
     predictor = DefaultPredictor(cfg)
 
+    random.seed(42)
     for sample in random.sample(dataset_dicts, 10):
         img = cv2.imread(sample["file_name"])
 
@@ -59,6 +60,7 @@ def main(config, wandb_name):
         plt.figure(figsize=(15, 7))
         plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
         plt.title("Ground truth")
+        plt.tight_layout()
         plt.show()
 
         # Predictions
@@ -68,6 +70,7 @@ def main(config, wandb_name):
         plt.figure(figsize=(15, 7))
         plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
         plt.title("Predicted")
+        plt.tight_layout()
         plt.show()
 
     # EVALUATE VALIDATION

@@ -44,6 +44,7 @@ def main(config, wandb_name):
         # visualize KITTI-MOTS ground truth and predictions
         dataset_dicts = get_kitti_dataset_COCO_id(config["dataset_path"], "val")
 
+        random.seed(42)
         for sample in random.sample(dataset_dicts, 10):
             img = cv2.imread(sample["file_name"])
 
@@ -53,6 +54,8 @@ def main(config, wandb_name):
             plt.figure(figsize=(15, 7))
             plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
             plt.title("Ground truth")
+            plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+            plt.tight_layout()
             plt.show()
 
             # Predictions
@@ -64,6 +67,7 @@ def main(config, wandb_name):
             plt.figure(figsize=(15, 7))
             plt.imshow(out.get_image()[:, :, ::-1][..., ::-1])
             plt.title("Predicted")
+            plt.tight_layout()
             plt.show()
 
     if config["bool_evaluate"]:
