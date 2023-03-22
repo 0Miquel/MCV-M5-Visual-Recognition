@@ -42,9 +42,12 @@ All the arguments are necessary.
 In the following link you can find the read-only Google Slides presentation for this week:
 https://docs.google.com/presentation/d/1whdoAJ6VHrrJ_RWEamB2IAcLW70gui0yw31goTlhJck/edit?usp=sharing
 
-
 ## Week 2 
-TODO
+
+```
+cd week2
+python task_e.py
+```
 
 ### Power Point Presentation
 In the following link you can find the read-only Google Slides presentation for this week:

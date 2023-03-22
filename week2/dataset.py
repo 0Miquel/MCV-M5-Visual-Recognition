@@ -68,7 +68,6 @@ def get_kitti_dataset_COCO_id(path, phase):
         0: 50,  # Background anywhere
         1: 2,  # Car to Car
         2: 0,  # Pedestrian to Person
-        # 10: 71  # Ignore to Toaster bc wtf not
     }
     instances = path+"instances_txt"
     sequences = path+"training/image_02"
