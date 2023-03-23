@@ -7,23 +7,33 @@ from detectron2 import model_zoo
 from detectron2.engine import DefaultPredictor
 from detectron2.data import MetadataCatalog
 from detectron2.utils.visualizer import Visualizer
+import cv2
 
 
 ###############################################################
 # PARAMETERS YOU CAN CHANGE
 ###############################################################
 # source image where you extract the object
-object_img_path = "../dataset/coco2017/val2017/000000020247.jpg"
+object_img_path = "../dataset/coco2017/val2017/000000105912.jpg"
 # object id we want to extract and paste
-object_id = 23  # check COCO objects id in https://github.com/pjreddie/darknet/blob/master/data/coco.names
+object_id = 11  # check COCO objects id in https://github.com/pjreddie/darknet/blob/master/data/coco.names
 # number of object to extract in case there are more than one of the same category in the image
 object_idx = 0
 # destination image where you paste the object
-source_img_path = "../dataset/coco2017/val2017/000000000139.jpg"
+source_img_path = "../result_img.png"
+# 000000086755.jpg # people in snow
+# 000000000139.jpg # living room
+# 000000020247.jpg # bears
+# 000000039551.jpg # tennis player
+# 000000001761.jpg # planes
+# 000000007816.jpg # motorcycle
+# 000000050679.jpg # huge orange
+# 000000089761.jpg # strange thing
+# 000000105912.jpg # boca de incendios
 # specify the path to the annotation file
 annFile = '../dataset/coco2017/annotations/instances_val2017.json'
 # position of pasted object in destination image
-position = (-100, -100)
+position = (200, 0)
 
 
 ###############################################################
@@ -53,10 +63,14 @@ mask = coco.annToMask(object_anns[object_idx])
 # get the object image
 object_img = Image.open(object_img_path)
 plt.imshow(np.array(object_img))
+plt.axis("off")
+plt.tight_layout()
 plt.show()
 # get the destination image
 source_img = Image.open(source_img_path)
 plt.imshow(np.array(source_img))
+plt.axis("off")
+plt.tight_layout()
 plt.show()
 # transform to mask to PIL
 mask = Image.fromarray(mask*255)
@@ -69,8 +83,11 @@ source_img.paste(object_masked_img, position, object_masked_img)
 # plot resulting image
 result_img = np.array(source_img)
 plt.imshow(result_img)
+plt.axis("off")
+plt.tight_layout()
 plt.show()
 
+cv2.imwrite(f"result_img.png", result_img[:, :, ::-1])
 
 ###############################################################
 # INFERE RESULTING IMAGE WITH FASTER AND MASK MODELS
@@ -91,5 +108,7 @@ for model in models:
     outimgpred = out.get_image()[:, :, ::-1]
 
     plt.imshow(outimgpred)
+    plt.axis("off")
     plt.tight_layout()
+    cv2.imwrite(f"{model.split('.')[0].split('/')[-1]}.png", outimgpred[:, :, ::-1])
     plt.show()
