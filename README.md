@@ -53,7 +53,14 @@ python task_e.py
 In the following link you can find the read-only Google Slides presentation for this week:
 https://docs.google.com/presentation/d/1NJRXlq7O_Mx9ZrNx00Bv-KhJWc3BFqJDpFG89rfuhj0/edit?usp=sharing
 
-## Week 2 & 3
+## Week 3
+```
+cd week3
+python task_a.py
+```
+### Power Point Presentation
+In the following link you can find the read-only Google Slides presentation for this week:
+https://docs.google.com/presentation/d/1Wicc6TT8sVbltHl0nESWz1UxX_8PSeO7KW8COBSkgjk/edit?usp=sharing
 ## Week 4
 TODO
 
