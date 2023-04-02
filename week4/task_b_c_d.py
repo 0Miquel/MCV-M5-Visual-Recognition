@@ -20,8 +20,10 @@ import logging
 import argparse
 import sys
 from torch import optim
-from models import HeadlessResnet, Embedder
+from models import HeadlessResnet, Embedder, Fusion
 from torchvision.datasets import ImageFolder
+
+import wandb
 
 
 def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, *args):
@@ -71,6 +73,9 @@ def get_transforms():
 
 
 def main(cfg):
+    # wandb.tensorboard.patch(root_logdir="example_tensorboard")
+    # wandb.init(project='test', sync_tensorboard=True)
+
     logging.getLogger().setLevel(logging.INFO)
     logging.info("VERSION %s" % pytorch_metric_learning.__version__)
 
@@ -133,7 +138,7 @@ def main(cfg):
     )
 
     end_of_epoch_hook = hooks.end_of_epoch_hook(
-        tester, dataset_dict, model_folder, test_interval=1, patience=5
+        tester, dataset_dict, model_folder, test_interval=cfg["test_interval"], patience=cfg["patience"]
     )
 
     # Create the trainer
@@ -154,6 +159,9 @@ def main(cfg):
         end_of_epoch_hook=end_of_epoch_hook,
     )
     trainer.train(num_epochs=cfg["num_epochs"])
+
+    # INFERENCE
+    inference_model = Fusion(trunk_model, embedder_model)
 
 
 if __name__ == "__main__":

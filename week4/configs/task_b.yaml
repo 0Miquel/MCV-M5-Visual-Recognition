@@ -15,3 +15,6 @@ loss: "contrastive"
 embedder_size: 64
 
 max_lr: 0.01
+
+patience: 5
+test_interval: 1  # every N epochs it validates with validation

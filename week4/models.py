@@ -6,13 +6,16 @@ from torchvision.models import ResNet18_Weights
 
 
 class HeadlessResnet(nn.Module):
-    def __init__(self, weights_path, embedding_size=64):
+    def __init__(self, weights_path, inference=False):
         super(HeadlessResnet, self).__init__()
         self.model = models.resnet18(weights=ResNet18_Weights)
         in_features = self.model.fc.in_features
 
         if weights_path is not None:
-            self.model.fc = nn.Linear(in_features=in_features, out_features=8, bias=True)
+            if not inference:
+                self.model.fc = nn.Linear(in_features=in_features, out_features=8, bias=True)
+            else:
+                self.model.fc = nn.Identity()
             state_dict = torch.load(weights_path)
             new_state_dict = OrderedDict()
             for k, v in state_dict.items():
@@ -20,8 +23,8 @@ class HeadlessResnet(nn.Module):
                 new_state_dict[name] = v
             self.model.load_state_dict(new_state_dict)
 
-        self.model.fc = nn.Identity()  # remove last layer
-        # self.model.fc = nn.Linear(in_features, embedding_size)
+        if not inference:
+            self.model.fc = nn.Identity()  # remove last layer
 
     def forward(self, x):
         output = self.model(x)
@@ -29,10 +32,30 @@ class HeadlessResnet(nn.Module):
 
 
 class Embedder(nn.Module):
-    def __init__(self, output_size, embedding_size):
+    def __init__(self, output_size, embedding_size, weights_path=None):
         super(Embedder, self).__init__()
         self.embedding = nn.Linear(output_size, embedding_size)
 
+        if weights_path is not None:
+            state_dict = torch.load(weights_path)
+            new_state_dict = OrderedDict()
+            for k, v in state_dict.items():
+                name = k[10:]  # remove `model.`
+                new_state_dict[name] = v
+            self.embedding.load_state_dict(new_state_dict)
+
     def forward(self, x):
         output = self.embedding(x)
+        return output
+
+
+class Fusion(nn.Module):
+    def __init__(self, trunk, embedder):
+        super(Fusion, self).__init__()
+        self.trunk = trunk
+        self.embedder = embedder
+
+    def forward(self, x):
+        x = self.trunk(x)
+        output = self.embedder(x)
         return output
