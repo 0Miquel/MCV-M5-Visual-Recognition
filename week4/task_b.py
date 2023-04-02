@@ -8,7 +8,7 @@ import pytorch_metric_learning.utils.logging_presets as logging_presets
 from pytorch_metric_learning import losses, miners, samplers, testers, trainers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 
-from week4.io import load_yaml_config
+from week4.i_o import load_yaml_config
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,6 +25,9 @@ from torchvision.datasets import ImageFolder
 
 
 def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, *args):
+    idx_to_class = {0: 'Opencountry', 1: 'coast', 2: 'forest', 3: 'highway', 4: 'inside_city',
+                    5: 'mountain', 6: 'street', 7: 'tallbuilding'}
+
     logging.info(
         "UMAP plot for the {} split and label set {}".format(split_name, keyname)
     )
@@ -38,8 +41,10 @@ def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, *args
     )
     for i in range(num_classes):
         idx = labels == label_set[i]
-        ax.plot(umap_embeddings[idx, 0], umap_embeddings[idx, 1], ".", markersize=4, label=f"Class {label_set[i]}")
-    plt.legend(loc='best', fontsize='large', markerscale=4)
+        ax.plot(umap_embeddings[idx, 0], umap_embeddings[idx, 1], ".", markersize=10,
+                label=f"{idx_to_class[label_set[i]]}")
+    plt.legend(loc='best', fontsize='large', markerscale=1)
+    plt.title(f"UMAP plot for the {split_name} split and label set {keyname}")
     plt.show()
 
 
@@ -128,7 +133,7 @@ def main(cfg):
     )
 
     end_of_epoch_hook = hooks.end_of_epoch_hook(
-        tester, dataset_dict, model_folder, test_interval=1, patience=1
+        tester, dataset_dict, model_folder, test_interval=1, patience=5
     )
 
     # Create the trainer
