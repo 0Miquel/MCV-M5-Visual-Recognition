@@ -29,7 +29,7 @@ def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, *args
                     5: 'mountain', 6: 'street', 7: 'tallbuilding'}
 
     logging.info(
-        "UMAP plot for the {} split and label set {}".format(split_name, keyname)
+        f"UMAP plot for the {split_name} split and epoch {args[0]}"
     )
     label_set = np.unique(labels)
     num_classes = len(label_set)
@@ -44,7 +44,7 @@ def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, *args
         ax.plot(umap_embeddings[idx, 0], umap_embeddings[idx, 1], ".", markersize=10,
                 label=f"{idx_to_class[label_set[i]]}")
     plt.legend(loc='best', fontsize='large', markerscale=1)
-    plt.title(f"UMAP plot for the {split_name} split and label set {keyname}")
+    plt.title(f"UMAP plot for the {split_name} split and epoch {args[0]}")
     plt.show()
 
 
