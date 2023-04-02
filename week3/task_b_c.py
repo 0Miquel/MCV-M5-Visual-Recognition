@@ -79,7 +79,7 @@ object_masked_img = object_img.convert("RGBA")
 object_masked_img.putalpha(mask)
 source_img.paste(object_masked_img, position, object_masked_img)
 # # save image
-# source_img.save("new.png", format="png")
+source_img.save("new.png", format="png")
 # plot resulting image
 result_img = np.array(source_img)
 plt.imshow(result_img)

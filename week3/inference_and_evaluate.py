@@ -1,20 +1,17 @@
+import argparse
 import os
+import random
+import sys
+
+import cv2
+import matplotlib.pyplot as plt
+from detectron2 import model_zoo
+from detectron2.config import get_cfg
+from detectron2.data import MetadataCatalog
+from detectron2.engine import DefaultPredictor
+from detectron2.utils.visualizer import Visualizer
 
 from dataset import create_detectron_dataset
-from detectron2.data import MetadataCatalog, DatasetCatalog
-from detectron2.utils.visualizer import Visualizer
-import matplotlib.pyplot as plt
-import cv2
-import random
-import torch
-from detectron2.config import get_cfg
-from detectron2 import model_zoo
-from detectron2.engine import DefaultPredictor
-from detectron2.evaluation import COCOEvaluator, inference_on_dataset
-from detectron2.data import build_detection_test_loader
-
-import argparse
-import sys
 from utils import *
 
 
@@ -36,11 +33,11 @@ def main(config, wandb_name):
             img = cv2.imread(sample["file_name"])
 
             # Ground truth
-            visualizer = Visualizer(img[:, :, ::-1],MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
+            visualizer = Visualizer(img[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
             out = visualizer.draw_dataset_dict(sample)
             outimggt = out.get_image()[:, :, ::-1]
             if config["save"]:
-                #create folder results if not already created
+                # create folder results if not already created
                 os.makedirs('results', exist_ok=True)
                 os.makedirs('results/gt', exist_ok=True)
                 cv2.imwrite(f"results/gt/outimggt_{i}.jpg", outimggt)
@@ -54,7 +51,7 @@ def main(config, wandb_name):
 
             # Predictions
             predictions = predictor(img)
-            visualizer = Visualizer(img[:, :, ::-1],MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
+            visualizer = Visualizer(img[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
             out = visualizer.draw_instance_predictions(predictions["instances"].to("cpu"))
             outimgpred = out.get_image()[:, :, ::-1]
             if config["save"]:

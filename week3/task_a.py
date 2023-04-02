@@ -1,26 +1,19 @@
 import os
+import random
+from datetime import datetime
+
+import cv2
+from detectron2 import model_zoo
+from detectron2.config import get_cfg
+from detectron2.data import MetadataCatalog
+from detectron2.engine import DefaultPredictor
+from detectron2.utils.visualizer import Visualizer
 
 from dataset import create_detectron_dataset
-from detectron2.data import MetadataCatalog, DatasetCatalog
-from detectron2.utils.visualizer import Visualizer
-import matplotlib.pyplot as plt
-import cv2
-import random
-import torch
-from detectron2.config import get_cfg
-from detectron2 import model_zoo
-from detectron2.engine import DefaultPredictor
-from detectron2.evaluation import COCOEvaluator, inference_on_dataset
-from detectron2.data import build_detection_test_loader
-
-import argparse
-import sys
-from utils import *
-from datetime import datetime
 
 
 def main():
-    now = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")+"_task_a"
+    now = datetime.now().strftime("%m-%d-%Y_%H-%M-%S") + "_task_a"
     os.makedirs('../results', exist_ok=True)
     os.makedirs(f'../results/{now}', exist_ok=True)
     paths = [f'../results/{now}/faster', f'../results/{now}/mask']
@@ -43,7 +36,7 @@ def main():
             img = cv2.imread(sample["file_name"])
             # Predictions
             predictions = predictor(img)
-            visualizer = Visualizer(img[:, :, ::-1],MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
+            visualizer = Visualizer(img[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.5)
             out = visualizer.draw_instance_predictions(predictions["instances"].to("cpu"))
             outimgpred = out.get_image()[:, :, ::-1]
 
