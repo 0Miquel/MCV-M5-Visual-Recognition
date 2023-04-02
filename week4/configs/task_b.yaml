@@ -1,0 +1,17 @@
+device: "cuda"
+
+weights_path: "weights/resnet_model0.pt"
+
+train_path: "../dataset/MIT_split/train"
+val_path: "../dataset/MIT_split/test"
+
+lr: 0.001
+batch_size: 64
+
+num_epochs: 20
+
+loss: "contrastive"
+
+embedder_size: 64
+
+max_lr: 0.01

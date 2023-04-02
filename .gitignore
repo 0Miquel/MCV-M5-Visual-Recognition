@@ -2,6 +2,7 @@
 outputs/*
 */output/*
 dataset/*
+# */weights/*
 models/*
 
 # Byte-compiled / optimized / DLL files
