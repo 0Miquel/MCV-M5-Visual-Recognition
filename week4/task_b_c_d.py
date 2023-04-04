@@ -5,6 +5,7 @@ https://github.com/KevinMusgrave/pytorch-metric-learning/blob/master/examples/no
 
 import pytorch_metric_learning
 import pytorch_metric_learning.utils.logging_presets as logging_presets
+from pytorch_metric_learning import distances, reducers
 from pytorch_metric_learning import losses, miners, samplers, testers, trainers
 from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 
@@ -47,6 +48,7 @@ def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, *args
                 label=f"{idx_to_class[label_set[i]]}")
     plt.legend(loc='best', fontsize='large', markerscale=1)
     plt.title(f"UMAP plot for the {split_name} split and epoch {args[0]}")
+    plt.savefig('umap.jpg')
     plt.show()
 
 
@@ -113,12 +115,13 @@ def main(cfg):
         mining_funcs = {
             "tuple_miner": miners.PairMarginMiner()
         }
+
     else:  # triplet loss
         loss_funcs = {
-            "metric_loss": losses.TripletMarginLoss(margin=0.1)
+            "metric_loss": losses.TripletMarginLoss(margin=0.2)
         }
         mining_funcs = {
-            "tuple_miner": miners.BatchHardMiner()
+            "tuple_miner": miners.TripletMarginMiner(margin=0.2, type_of_triplets="semihard")
         }
 
     record_keeper, _, _ = logging_presets.get_record_keeper(
@@ -159,9 +162,6 @@ def main(cfg):
         end_of_epoch_hook=end_of_epoch_hook,
     )
     trainer.train(num_epochs=cfg["num_epochs"])
-
-    # INFERENCE
-    inference_model = Fusion(trunk_model, embedder_model)
 
 
 if __name__ == "__main__":

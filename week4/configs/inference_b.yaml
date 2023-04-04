@@ -1,0 +1,11 @@
+device: "cuda"
+
+train_path: "../dataset/MIT_split/train"
+val_path: "../dataset/MIT_split/test"
+
+trunk_path: "models/triplet/no_mining/trunk_best10.pth"
+embedder_path: "models/triplet/no_mining/embedder_best10.pth"
+
+embedder_size: 64
+
+k_neighbours: 10

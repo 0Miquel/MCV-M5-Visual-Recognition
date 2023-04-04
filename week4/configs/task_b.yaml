@@ -10,7 +10,7 @@ batch_size: 64
 
 num_epochs: 10
 
-loss: "contrastive"
+loss: "triplet"  # contrastive
 
 embedder_size: 64
 

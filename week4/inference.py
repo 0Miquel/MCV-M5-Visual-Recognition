@@ -19,6 +19,8 @@ from models import HeadlessResnet, Embedder, Fusion
 from torchvision.datasets import ImageFolder
 from tqdm import tqdm
 
+from week4.utils import mAP, mpk, mrk, plot_roc, plot_imgs, plot_pr
+
 
 def get_transforms():
     augmentations = {
@@ -58,8 +60,8 @@ def main(cfg):
     val_dataset = ImageFolder(cfg["val_path"], transform=augmentations["val"])
 
     # set inference model
-    trunk = HeadlessResnet("example_saved_models/trunk_best10.pth", True)
-    embedder = Embedder(512, cfg["embedder_size"], "example_saved_models/embedder_best10.pth")
+    trunk = HeadlessResnet(cfg["trunk_path"], True)
+    embedder = Embedder(512, cfg["embedder_size"], cfg["embedder_path"])
     inference_model = Fusion(trunk, embedder)
 
     # set data
@@ -73,10 +75,13 @@ def main(cfg):
     query_labels = np.asarray([x[1] for x in query_meta])
 
     # Image retrieval:
-    knn = KNeighborsClassifier(n_neighbors=len(catalogue_labels), p=1)
+    knn = KNeighborsClassifier(n_neighbors=cfg["k_neighbours"], p=1)
     knn = knn.fit(catalogue_data, catalogue_labels)
-    neighbors = knn.kneighbors(query_data)[1]
 
+    plot_roc(catalogue_data, query_data, catalogue_labels, query_labels, knn)
+    plot_pr(catalogue_data, query_data, catalogue_labels, query_labels, knn)
+
+    neighbors = knn.kneighbors(query_data)[1]
     neighbors_labels = []
     for i in range(len(neighbors)):
         neighbors_class = [catalogue_meta[j][1] for j in neighbors[i]]
@@ -84,10 +89,25 @@ def main(cfg):
 
     query_labels = [x[1] for x in query_meta]
 
+    p_1 = mpk(query_labels, neighbors_labels, 1)
+    p_5 = mpk(query_labels, neighbors_labels, 5)
+    p_10 = mpk(query_labels, neighbors_labels, 10)
+    print(f"Precision@1={p_1}, Precision@5={p_5}, Precision@10={p_10}")
+
+    r_1 = mrk(query_labels, neighbors_labels, 1)
+    r_5 = mrk(query_labels, neighbors_labels, 5)
+    r_10 = mrk(query_labels, neighbors_labels, 10)
+    print(f"Recall@1={r_1}, Recall@5={r_5}, Recall@10={r_10}")
+
+    map_ = mAP(query_labels, neighbors_labels)
+    print(f"mAP={map_}")
+
+    plot_imgs(neighbors, query_meta, catalogue_meta)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='configs/task_b.yaml')
+    parser.add_argument('--config', default='configs/inference_b.yaml')
     args = parser.parse_args(sys.argv[1:])
     config_path = args.config
 
