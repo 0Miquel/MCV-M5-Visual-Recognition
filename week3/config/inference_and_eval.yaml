@@ -1,5 +1,5 @@
-dataset_path: "../dataset/out_of_context/"
-model_path: "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"
+dataset_path: "../dataset/cocovsstyle/stuff/"
+model_path: "COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml" #
 bool_evaluate: False
 plot: False
 save: True

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
 from itertools import cycle
@@ -247,6 +249,7 @@ def plot_imgs(neighbors, query_meta, catalogue_meta):
         neighbour = neighbors[idx]
         query_path, query_label = query_meta[idx]
         query_img = cv2.imread(root_path+query_path)[:, :, ::-1]
+        os.makedirs('results', exist_ok=True)
         plt.imshow(query_img)
         plt.title(f"Query Image: {idx_to_class[query_label]}")
         plt.axis('off')

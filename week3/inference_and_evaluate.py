@@ -29,7 +29,7 @@ def main(config, wandb_name):
         dataset_dicts = create_detectron_dataset(config["dataset_path"])
 
         random.seed(42)
-        for i, sample in enumerate(random.sample(dataset_dicts, 10)):
+        for i, sample in enumerate(dataset_dicts):#random.sample(dataset_dicts, 4)):
             img = cv2.imread(sample["file_name"])
 
             # Ground truth
@@ -39,8 +39,8 @@ def main(config, wandb_name):
             if config["save"]:
                 # create folder results if not already created
                 os.makedirs('results', exist_ok=True)
-                os.makedirs('results/gt', exist_ok=True)
-                cv2.imwrite(f"results/gt/outimggt_{i}.jpg", outimggt)
+                os.makedirs('results/stylegit', exist_ok=True)
+                # cv2.imwrite(f"results/stylegit/outimggt_{i}.jpg", outimggt)
             if config["plot"]:
                 plt.figure(figsize=(15, 7))
                 plt.imshow(outimggt[..., ::-1])
@@ -55,8 +55,8 @@ def main(config, wandb_name):
             out = visualizer.draw_instance_predictions(predictions["instances"].to("cpu"))
             outimgpred = out.get_image()[:, :, ::-1]
             if config["save"]:
-                os.makedirs('results/pred', exist_ok=True)
-                cv2.imwrite(f"results/pred/outimgpred_{i}.jpg", outimgpred)
+                os.makedirs('results/style', exist_ok=True)
+                cv2.imwrite(f"results/stylegit/outimgpred_{i}.jpg", outimgpred)
             if config["plot"]:
                 plt.figure(figsize=(15, 7))
                 plt.imshow(outimgpred[..., ::-1])

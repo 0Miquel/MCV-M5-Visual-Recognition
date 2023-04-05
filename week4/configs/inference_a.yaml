@@ -1,0 +1,8 @@
+device: "cuda"
+
+train_path: "../dataset/MIT_split/train"
+val_path: "../dataset/MIT_split/test"
+
+weights_path: "weights/resnet_model0.pt"
+
+k_neighbours: 10
