@@ -1,0 +1,22 @@
+device: "cuda"
+
+weights_path: "weights/resnet_model0.pt"
+
+train_path: "/export/home/mcv/datasets/COCO/train2014"
+val_path: "/export/home/mcv/datasets/COCO/val2014"
+train_ann_file: "/export/home/mcv/datasets/COCO/instances_train2014.json"
+val_ann_file: "/export/home/mcv/datasets/COCO/instances_val2014.json"
+
+lr: 0.001
+batch_size: 64
+
+num_epochs: 10
+
+loss: "triplet"  # contrastive
+
+embedder_size: 64
+
+max_lr: 0.01
+
+patience: 5
+test_interval: 1  # every N epochs it validates with validation
