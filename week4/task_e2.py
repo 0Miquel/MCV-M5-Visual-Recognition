@@ -35,7 +35,6 @@ from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 import torch.nn as nn
 import torch.optim as optim
-from contrastive_loss import ContrastiveLoss
 
 import wandb
 
@@ -110,7 +109,7 @@ def main(cfg):
     backbone = models.resnet50(pretrained=True)
     backbone = torch.nn.Sequential(*(list(backbone.children())[:-1]))
     model = FasterRCNN(backbone, num_classes=91)
-    criterion = ContrastiveLoss()
+    criterion = losses.ContrastiveLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
 
     # define the data loader and dataset

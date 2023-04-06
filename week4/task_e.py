@@ -35,10 +35,11 @@ from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 import torch.nn as nn
 import torch.optim as optim
-from contrastive_loss import ContrastiveLoss
 
 import wandb
 
+#pip install record-keeper tensorboard
+#pip install faiss
 
 def visualizer_hook(umapper, umap_embeddings, labels, split_name, keyname, *args):
     idx_to_class = {0: 'Opencountry', 1: 'coast', 2: 'forest', 3: 'highway', 4: 'inside_city',
@@ -69,19 +70,19 @@ def get_transforms():
     augmentations = {
         "train":
             transforms.Compose([
-                transforms.ColorJitter(brightness=.3, hue=.3),
-                transforms.RandomResizedCrop(256, (0.15, 1.0)),
-                transforms.RandomRotation(degrees=30),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.Resize((224, 224)),
+                # transforms.ColorJitter(brightness=.3, hue=.3),
+                # transforms.RandomResizedCrop(256, (0.15, 1.0)),
+                # transforms.RandomRotation(degrees=30),
+                # transforms.RandomHorizontalFlip(p=0.5),
+                # transforms.Resize((224, 224)),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ]),
         "val":
             transforms.Compose([
-                transforms.Resize((224, 224)),
+                # transforms.Resize((224, 224)),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ])
     }
     return augmentations
@@ -105,24 +106,24 @@ def main(cfg):
     # train_dataset = ImageFolder(cfg["train_path"], transform=augmentations["train"])
     # val_dataset = ImageFolder(cfg["val_path"], transform=augmentations["val"])
 
-    data_labels = [x for _, x in train_dataset.samples]
-    class_sampler = samplers.MPerClassSampler(
-        labels=data_labels,
-        m=cfg["batch_size"] // 8,
-        batch_size=cfg["batch_size"],
-        length_before_new_iter=len(train_dataset),
-    )
+    # data_labels = [x for _, x in train_dataset.samples]
+    # class_sampler = samplers.MPerClassSampler(
+    #     labels=data_labels,
+    #     m=cfg["batch_size"] // 8,
+    #     batch_size=cfg["batch_size"],
+    #     length_before_new_iter=len(train_dataset),
+    # )
 
     # set model
-    model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True).to(cfg["device"])
+    trunk_model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True).to(cfg["device"])
     num_classes = 91  # COCO dataset has 80 classes + 1 background class
-    in_features = model.roi_heads.box_predictor.cls_score.in_features
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    in_features = trunk_model.roi_heads.box_predictor.cls_score.in_features
+    trunk_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
     # trunk_model = HeadlessResnet(cfg["weights_path"]).to(cfg["device"])
-    # trunk_optimizer = optim.Adam(trunk_model.parameters(), cfg["lr"])
-    # trunk_scheduler = optim.lr_scheduler.OneCycleLR(trunk_optimizer, max_lr=cfg["max_lr"],
-    #                                                 steps_per_epoch=len(train_dataset) // cfg["batch_size"],
-    #                                                 epochs=cfg["num_epochs"])
+    trunk_optimizer = optim.Adam(trunk_model.parameters(), cfg["lr"])
+    trunk_scheduler = optim.lr_scheduler.OneCycleLR(trunk_optimizer, max_lr=cfg["max_lr"],
+                                                    steps_per_epoch=len(train_dataset) // cfg["batch_size"],
+                                                    epochs=cfg["num_epochs"])
 
     embedder_model = Embedder(512, cfg["embedder_size"]).to(cfg["device"])
     embedder_optimizer = optim.Adam(embedder_model.parameters(), cfg["lr"])
@@ -157,8 +158,8 @@ def main(cfg):
     # Create the tester
     tester = testers.GlobalEmbeddingSpaceTester(
         end_of_testing_hook=hooks.end_of_testing_hook,
-        visualizer=umap.UMAP(),
-        visualizer_hook=visualizer_hook,
+        # visualizer=umap.UMAP(),
+        # visualizer_hook=visualizer_hook,
         dataloader_num_workers=2,
         accuracy_calculator=AccuracyCalculator(k="max_bin_count"),
     )
@@ -178,7 +179,7 @@ def main(cfg):
         mining_funcs=mining_funcs,
         dataset=train_dataset,
         data_device=cfg["device"],
-        sampler=class_sampler,
+        # sampler=class_sampler,
         lr_schedulers={"trunk_scheduler_by_iteration": trunk_scheduler,
                        "embedder_scheduler_by_iteration": embedder_scheduler},
         end_of_iteration_hook=hooks.end_of_iteration_hook,
