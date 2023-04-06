@@ -74,15 +74,15 @@ def get_transforms():
                 # transforms.RandomResizedCrop(256, (0.15, 1.0)),
                 # transforms.RandomRotation(degrees=30),
                 # transforms.RandomHorizontalFlip(p=0.5),
-                # transforms.Resize((224, 224)),
+                transforms.Resize((800, 800)),
                 transforms.ToTensor(),
-                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ]),
         "val":
             transforms.Compose([
-                # transforms.Resize((224, 224)),
+                transforms.Resize((800, 800)),
                 transforms.ToTensor(),
-                # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ])
     }
     return augmentations
@@ -97,10 +97,19 @@ def main(cfg):
 
     # set datasets
     augmentations = get_transforms()
-    train_dataset = CocoDetection(root=cfg["train_path"], annFile=cfg["train_ann_file"], transform=augmentations)
-    val_dataset = CocoDetection(root=cfg["val_path"], annFile=cfg["val_ann_file"], transform=augmentations)
+    transform_train = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
 
-    # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg["batch_size"], shuffle=True,num_workers=4)
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+    train_dataset = CocoDetection(root=cfg["train_path"], annFile=cfg["train_ann_file"], transform=transform_train)
+    val_dataset = CocoDetection(root=cfg["val_path"], annFile=cfg["val_ann_file"], transform=transform_test)
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg["batch_size"], shuffle=True,num_workers=4)
     # val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=cfg["batch_size"], shuffle=False, num_workers=4)
 
     # train_dataset = ImageFolder(cfg["train_path"], transform=augmentations["train"])
@@ -115,17 +124,21 @@ def main(cfg):
     # )
 
     # set model
-    trunk_model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True).to(cfg["device"])
-    num_classes = 91  # COCO dataset has 80 classes + 1 background class
-    in_features = trunk_model.roi_heads.box_predictor.cls_score.in_features
-    trunk_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    # trunk_model = models.detection.fasterrcnn_resnet50_fpn(pretrained=True).to(cfg["device"])
+    # num_classes = 91  # COCO dataset has 80 classes + 1 background class
+    # in_features = trunk_model.roi_heads.box_predictor.cls_score.in_features
+    # trunk_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+    backbone = models.resnet50(pretrained=True)
+    backbone.out_channels = 2048 # set the out_channels attribute
+
+    trunk_model = FasterRCNN(backbone, num_classes=91)
     # trunk_model = HeadlessResnet(cfg["weights_path"]).to(cfg["device"])
     trunk_optimizer = optim.Adam(trunk_model.parameters(), cfg["lr"])
     trunk_scheduler = optim.lr_scheduler.OneCycleLR(trunk_optimizer, max_lr=cfg["max_lr"],
                                                     steps_per_epoch=len(train_dataset) // cfg["batch_size"],
                                                     epochs=cfg["num_epochs"])
 
-    embedder_model = Embedder(512, cfg["embedder_size"]).to(cfg["device"])
+    embedder_model = Embedder(2048, cfg["embedder_size"]).to(cfg["device"])
     embedder_optimizer = optim.Adam(embedder_model.parameters(), cfg["lr"])
     embedder_scheduler = optim.lr_scheduler.OneCycleLR(embedder_optimizer, max_lr=cfg["max_lr"],
                                                        steps_per_epoch=len(train_dataset) // cfg["batch_size"],
