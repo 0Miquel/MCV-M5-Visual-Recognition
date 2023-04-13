@@ -7,20 +7,10 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import random
-from PIL import Image
-import PIL.ImageOps
-
-import torchvision
-import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+from PIL import Image
 from torch.utils.data import DataLoader, Dataset
-import torchvision.utils
-import torch
-from torch.autograd import Variable
-import torch.nn as nn
-from torch import optim
-import torch.nn.functional as F
+
 from week4.i_o import load_yaml_config
 
 
@@ -50,7 +40,8 @@ class SiameseNetworkDataset(Dataset):
 
         label = int(class_idx == np.random.randint(len(classes)))
 
-        return (image_pair[0], image_pair[1], label)
+        triplet = (image_pair[0], image_pair[1], label)
+        return triplet
 
     def __len__(self):
         with open(self.msc_ann_path) as f:
@@ -59,6 +50,7 @@ class SiameseNetworkDataset(Dataset):
         num_pairs = sum(len(image_paths) for image_paths in msc_ann['train'].values()) * 2
 
         return num_pairs
+
 
 class TripletNetworkDataset(Dataset):
     def __init__(self, msc_ann_path, transform=None, cfg=None):
@@ -88,7 +80,8 @@ class TripletNetworkDataset(Dataset):
         negative_path = np.random.choice(msc_ann['train'][negative_class])
         negative = self._load_image(negative_path)
 
-        return (anchor, positive, negative)
+        triplet = (anchor, positive, negative)
+        return triplet
 
     def __len__(self):
         with open(self.msc_ann_path) as f:
@@ -106,7 +99,6 @@ class TripletNetworkDataset(Dataset):
         return image
 
 
-
 # Showing images
 def imshow(img, text=None):
     npimg = img.numpy()
@@ -117,6 +109,7 @@ def imshow(img, text=None):
 
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
+
 
 def imshow_triplet(img1, img2, img3, text=None):
     npimg1 = img1.numpy()
@@ -143,9 +136,8 @@ def show_plot(iteration, loss):
     plt.plot(iteration, loss)
     plt.show()
 
+
 def main(cfg):
-
-
     # Resize the images and transform to tensors
     transformation = transforms.Compose([transforms.Resize((100, 100)),
                                          transforms.ToTensor()
@@ -164,7 +156,7 @@ def main(cfg):
 
     example_batch = next(iter(vis_dataloader))
 
-    #plot all the images
+    # plot all the images
     for i in range(8):
         imshow_triplet(example_batch[0][i], example_batch[1][i], example_batch[2][i])
     print(example_batch[1].numpy().reshape(-1))
