@@ -2,11 +2,11 @@ device: "cuda"
 
 weights_path: "weights/resnet_model0.pt"
 
-train_path: "D:/datasets_diskD/train2014/"
-val_path: "D:/datasets_diskD/val2014/"
-train_ann_file: "D:/datasets_diskD/annotations/instances_train2014.json"
-val_ann_file: "D:/datasets_diskD/annotations/instances_val2014.json"
-msc_ann: "D:/datasets_diskD/annotations/mcv_image_retrieval_annotations.json"
+train_path: "../dataset/COCO/train2014/"
+val_path: "../dataset/COCO/val2014/"
+train_ann_file: "../dataset/COCO/instances_train2014.json"
+val_ann_file: "../dataset/COCO/instances_val2014.json"
+msc_ann: "../dataset/COCO/mcv_image_retrieval_annotations.json"
 
 lr: 0.001
 batch_size: 32
