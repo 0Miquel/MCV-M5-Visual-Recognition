@@ -20,7 +20,7 @@ parameters:
   trainer.metrics:
     value: ["accuracy"]
   trainer.model_path:
-    value: models/first_model.pt
+    value: weights/first_model.pt
   trainer.n_epochs:
     value: 1
   trainer.device:
