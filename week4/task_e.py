@@ -22,7 +22,6 @@ class TrunkFasterRCNN(nn.Module):
         super(TrunkFasterRCNN, self).__init__()
         self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
 
-        self.features = []
         # you can also hook layers inside the roi_heads
         self.layer_to_hook = 'roi_heads'
         for name, layer in self.model.named_modules():
@@ -30,11 +29,11 @@ class TrunkFasterRCNN(nn.Module):
             layer.register_forward_hook(self.save_features)
 
     def save_features(self, mod, inp, outp):
-        self.features.append(outp)
+        self.features = outp
 
     def forward(self, x):
         _ = self.model(x)
-        return self.features[self.layer_to_hook]
+        return self.features
 
 
 def main():
