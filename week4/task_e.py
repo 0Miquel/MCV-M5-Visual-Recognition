@@ -55,6 +55,7 @@ def train(model, dataloader, optimizer, criterion, cfg):
                 running_loss += loss_contrastive.item() * output1.size(0)
                 epoch_loss = running_loss / dataset_size
                 tepoch.set_postfix({"loss": epoch_loss})
+        torch.save(model.state_dict(), f"model_epoch_{epoch}.pt")
 
 
 def main(cfg):
