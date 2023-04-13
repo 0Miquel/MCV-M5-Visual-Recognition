@@ -8,13 +8,13 @@ val_path: "../dataset/MIT_split/test"
 lr: 0.001
 batch_size: 64
 
-num_epochs: 10
+num_epochs: 40
 
-loss: "triplet"  # contrastive
+loss: "contrastive"  # contrastive
 
-embedder_size: 64
+embedder_size: 256
 
 max_lr: 0.01
 
-patience: 5
+patience: 40
 test_interval: 1  # every N epochs it validates with validation
