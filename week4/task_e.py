@@ -24,7 +24,7 @@ from tqdm import tqdm
 
 
 def train(model, dataloader, optimizer, criterion, cfg):
-    model.eval()
+    model.train()
     # Iterate throught the epochs
     for epoch in range(cfg["num_epochs"]):
         dataset_size = 0
