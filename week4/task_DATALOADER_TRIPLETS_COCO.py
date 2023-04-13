@@ -29,16 +29,21 @@ class SiameseNetworkDataset(Dataset):
         self.msc_ann_path = msc_ann_path
         self.transform = transform
         self.cfg = cfg
+        self.msc_ann = json.load(open(self.msc_ann_path))
+        self.classes = list(self.msc_ann['train'].keys())
 
     def __getitem__(self, index):
-        with open(self.msc_ann_path) as f:
-            msc_ann = json.load(f)
 
-        classes = list(msc_ann['train'].keys())
-        class_idx = np.random.randint(len(classes))
-        selected_class = classes[class_idx]
+        class_idx = np.random.randint(len(self.classes))
+        selected_class = self.classes[class_idx]
 
-        selected_images = np.random.choice(msc_ann['train'][selected_class], size=2, replace=False)
+        selected_images = np.random.choice(self.msc_ann['train'][selected_class], size=2, replace=False)
+        label = 0  # same class
+
+        if np.random.rand() < 0.5:
+            different_class = np.random.choice(list(set(self.classes) - set([selected_class])))
+            selected_images[1] = np.random.choice(self.msc_ann['train'][different_class])
+            label = 1  # different class
 
         image_pair = []
         for image_path in selected_images:
@@ -47,8 +52,6 @@ class SiameseNetworkDataset(Dataset):
             if self.transform:
                 image = self.transform(image)
             image_pair.append(image)
-
-        label = int(class_idx == np.random.randint(len(classes)))
 
         return (image_pair[0], image_pair[1], label)
 
@@ -60,6 +63,7 @@ class SiameseNetworkDataset(Dataset):
 
         return num_pairs
 
+
 class TripletNetworkDataset(Dataset):
     def __init__(self, msc_ann_path, transform=None, cfg=None):
         self.msc_ann_path = msc_ann_path
@@ -69,8 +73,6 @@ class TripletNetworkDataset(Dataset):
         self.classes = list(self.msc_ann['train'].keys())
 
     def __getitem__(self, index):
-
-
         class_idx = np.random.randint(len(self.classes))
         selected_class = self.classes[class_idx]
 
@@ -106,7 +108,6 @@ class TripletNetworkDataset(Dataset):
         return image
 
 
-
 # Showing images
 def imshow(img, text=None):
     npimg = img.numpy()
@@ -117,6 +118,7 @@ def imshow(img, text=None):
 
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
+
 
 def imshow_triplet(img1, img2, img3, text=None):
     npimg1 = img1.numpy()
@@ -143,16 +145,18 @@ def show_plot(iteration, loss):
     plt.plot(iteration, loss)
     plt.show()
 
+
 def main(cfg):
-
-
     # Resize the images and transform to tensors
     transformation = transforms.Compose([transforms.Resize((100, 100)),
                                          transforms.ToTensor()
                                          ])
 
     # Initialize the network
-    siamese_dataset = TripletNetworkDataset(msc_ann_path=cfg["msc_ann"],
+    # siamese_dataset = TripletNetworkDataset(msc_ann_path=cfg["msc_ann"],
+    #                                         transform=transformation,
+    #                                         cfg=cfg)
+    siamese_dataset = SiameseNetworkDataset(msc_ann_path=cfg["msc_ann"],
                                             transform=transformation,
                                             cfg=cfg)
 
@@ -164,10 +168,16 @@ def main(cfg):
 
     example_batch = next(iter(vis_dataloader))
 
-    #plot all the images
-    for i in range(8):
-        imshow_triplet(example_batch[0][i], example_batch[1][i], example_batch[2][i])
-    print(example_batch[1].numpy().reshape(-1))
+    # Example batch is a list containing 2x8 images, indexes 0 and 1, an also the label
+    # If the label is 1, it means that it is not the same person, label is 0, same person in both images
+    concatenated = torch.cat((example_batch[0], example_batch[1]), 0)
+    imshow(torchvision.utils.make_grid(concatenated))
+    print(example_batch[2].numpy().reshape(-1))
+
+    # plot all the images triplets
+    # for i in range(8):
+    #     imshow_triplet(example_batch[0][i], example_batch[1][i], example_batch[2][i])
+    # print(example_batch[1].numpy().reshape(-1))
 
 
 if __name__ == "__main__":
