@@ -19,16 +19,21 @@ class SiameseNetworkDataset(Dataset):
         self.msc_ann_path = msc_ann_path
         self.transform = transform
         self.cfg = cfg
+        self.msc_ann = json.load(open(self.msc_ann_path))
+        self.classes = list(self.msc_ann['train'].keys())
 
     def __getitem__(self, index):
-        with open(self.msc_ann_path) as f:
-            msc_ann = json.load(f)
 
-        classes = list(msc_ann['train'].keys())
-        class_idx = np.random.randint(len(classes))
-        selected_class = classes[class_idx]
+        class_idx = np.random.randint(len(self.classes))
+        selected_class = self.classes[class_idx]
 
-        selected_images = np.random.choice(msc_ann['train'][selected_class], size=2, replace=False)
+        selected_images = np.random.choice(self.msc_ann['train'][selected_class], size=2, replace=False)
+        label = 0  # same class
+
+        if np.random.rand() < 0.5:
+            different_class = np.random.choice(list(set(self.classes) - set([selected_class])))
+            selected_images[1] = np.random.choice(self.msc_ann['train'][different_class])
+            label = 1  # different class
 
         image_pair = []
         for image_path in selected_images:
@@ -38,10 +43,7 @@ class SiameseNetworkDataset(Dataset):
                 image = self.transform(image)
             image_pair.append(image)
 
-        label = int(class_idx == np.random.randint(len(classes)))
-
-        triplet = (image_pair[0], image_pair[1], label)
-        return triplet
+        return (image_pair[0], image_pair[1], label)
 
     def __len__(self):
         with open(self.msc_ann_path) as f:
@@ -61,8 +63,6 @@ class TripletNetworkDataset(Dataset):
         self.classes = list(self.msc_ann['train'].keys())
 
     def __getitem__(self, index):
-
-
         class_idx = np.random.randint(len(self.classes))
         selected_class = self.classes[class_idx]
 
@@ -144,7 +144,10 @@ def main(cfg):
                                          ])
 
     # Initialize the network
-    siamese_dataset = TripletNetworkDataset(msc_ann_path=cfg["msc_ann"],
+    # siamese_dataset = TripletNetworkDataset(msc_ann_path=cfg["msc_ann"],
+    #                                         transform=transformation,
+    #                                         cfg=cfg)
+    siamese_dataset = SiameseNetworkDataset(msc_ann_path=cfg["msc_ann"],
                                             transform=transformation,
                                             cfg=cfg)
 
