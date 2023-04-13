@@ -65,27 +65,27 @@ class TripletNetworkDataset(Dataset):
         self.msc_ann_path = msc_ann_path
         self.transform = transform
         self.cfg = cfg
+        self.msc_ann = json.load(open(self.msc_ann_path))
+        self.classes = list(self.msc_ann['train'].keys())
 
     def __getitem__(self, index):
-        with open(self.msc_ann_path) as f:
-            msc_ann = json.load(f)
 
-        classes = list(msc_ann['train'].keys())
-        class_idx = np.random.randint(len(classes))
-        selected_class = classes[class_idx]
+
+        class_idx = np.random.randint(len(self.classes))
+        selected_class = self.classes[class_idx]
 
         # Select anchor image from selected class
-        anchor_path = np.random.choice(msc_ann['train'][selected_class])
+        anchor_path = np.random.choice(self.msc_ann['train'][selected_class])
         anchor = self._load_image(anchor_path)
 
         # Select positive image from same class as anchor
-        positive_path = np.random.choice(msc_ann['train'][selected_class])
+        positive_path = np.random.choice(self.msc_ann['train'][selected_class])
         positive = self._load_image(positive_path)
 
         # Select negative image from a different class
-        negative_class_idx = (class_idx + np.random.randint(1, len(classes))) % len(classes)
-        negative_class = classes[negative_class_idx]
-        negative_path = np.random.choice(msc_ann['train'][negative_class])
+        negative_class_idx = (class_idx + np.random.randint(1, len(self.classes))) % len(self.classes)
+        negative_class = self.classes[negative_class_idx]
+        negative_path = np.random.choice(self.msc_ann['train'][negative_class])
         negative = self._load_image(negative_path)
 
         return (anchor, positive, negative)
