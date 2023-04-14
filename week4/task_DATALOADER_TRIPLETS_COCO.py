@@ -4,6 +4,7 @@ https://datahacker.rs/019-siamese-network-in-pytorch-with-application-to-face-si
 import argparse
 import json
 import sys
+from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,36 +15,57 @@ from torch.utils.data import DataLoader, Dataset
 from week4.i_o import load_yaml_config
 
 
+def image_shares_classes(ann_img1: Dict, ann_img2: Dict) -> bool:
+    """
+    Checks if the two images share at least one class
+    :param ann_img1: annotations of the first image
+    :param ann_img2: annotations of the second image
+    :return: True if the two images share at least one class, False otherwise
+    """
+    share_ids = False
+    ids_iter = iter(ann_img1.keys())
+    while not share_ids:
+        try:
+            item = next(ids_iter)
+            if ann_img1[item] > 0 and ann_img2[item] > 0:
+                share_ids = True
+        except StopIteration:
+            break
+    return share_ids
+
+
 class SiameseNetworkDataset(Dataset):
-    def __init__(self, msc_ann_path, transform=None, cfg=None):
+    def __init__(self, msc_ann_path: str, subset: str = 'train', transform=None, cfg: Dict = None):
         self.msc_ann_path = msc_ann_path
         self.transform = transform
-        self.cfg = cfg
-        self.msc_ann = json.load(open(self.msc_ann_path))
-        self.classes = list(self.msc_ann['train'].keys())
+        self.imgs_path = cfg[f'{subset}_path'] + f"COCO_{subset}2014_"
+        self.mcv_ann = json.load(open(self.msc_ann_path))[subset]
+        self.classes = list(self.mcv_ann.keys())
 
     def __getitem__(self, index):
-
         class_idx = np.random.randint(len(self.classes))
         selected_class = self.classes[class_idx]
-
-        selected_images = np.random.choice(self.msc_ann['train'][selected_class], size=2, replace=False)
+        selected_imgs_ids = np.random.choice(self.mcv_ann[selected_class], size=2, replace=False)
+        selected_imgs_annots = [self._load_annot(img_id) for img_id in selected_imgs_ids]
         label = 0  # same class
 
         if np.random.rand() < 0.5:
-            different_class = np.random.choice(list(set(self.classes) - set([selected_class])))
-            selected_images[1] = np.random.choice(self.msc_ann['train'][different_class])
+            different_class = np.random.choice(list(set(self.classes) - {selected_class}))
             label = 1  # different class
+            while image_shares_classes(selected_imgs_annots[0], selected_imgs_annots[1]):
+                selected_imgs_ids[1] = np.random.choice(self.mcv_ann[different_class])
+                selected_imgs_annots[1] = self._load_annot(selected_imgs_ids[1])
 
         image_pair = []
-        for image_path in selected_images:
-            path_name = self.cfg["train_path"] + "COCO_train2014_" + "{:012d}".format(image_path) + ".jpg"
+        for image_id in selected_imgs_ids:
+            path_name = self.imgs_path + "{:012d}".format(image_id) + ".jpg"
             image = Image.open(path_name).convert('RGB')
             if self.transform:
                 image = self.transform(image)
             image_pair.append(image)
 
-        return (image_pair[0], image_pair[1], label)
+        tuple_and_label = ((image_pair[0], image_pair[1]), tuple(selected_imgs_annots), label)
+        return tuple_and_label
 
     def __len__(self):
         with open(self.msc_ann_path) as f:
@@ -52,6 +74,18 @@ class SiameseNetworkDataset(Dataset):
         num_pairs = sum(len(image_paths) for image_paths in msc_ann['train'].values()) * 2
 
         return num_pairs
+
+    def _load_annot(self, img_id: int) -> Dict[int, int]:
+        """
+        Returns a dictionary with the annotations of the image
+        The keys are the category ids and the values are the number of instances of that category
+        :param img_id: id of the image
+        :return: dictionary with the annotations of the image
+        """
+        annots = {}
+        for obj_id, obj_list in self.mcv_ann.items():
+            annots[int(obj_id)] = obj_list.count(img_id)
+        return annots
 
 
 class TripletNetworkDataset(Dataset):
