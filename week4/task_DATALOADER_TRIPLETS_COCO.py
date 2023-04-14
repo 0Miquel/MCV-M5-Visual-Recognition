@@ -8,10 +8,12 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 
+from week4.coco_classes import coco_id_class_mapping
 from week4.i_o import load_yaml_config
 
 
@@ -64,7 +66,7 @@ class SiameseNetworkDataset(Dataset):
                 image = self.transform(image)
             image_pair.append(image)
 
-        tuple_and_label = ((image_pair[0], image_pair[1]), tuple(selected_imgs_annots), label)
+        tuple_and_label = ((image_pair[0], image_pair[1]), tuple(selected_imgs_annots), label, selected_class)
         return tuple_and_label
 
     def __len__(self):
@@ -165,6 +167,59 @@ def imshow_triplet(img1, img2, img3, text=None):
     plt.show()
 
 
+def visualize_duplet(
+        anchor: np.ndarray,
+        pick: np.ndarray,
+        annot_anchor: Dict,
+        annot_pick: Dict,
+        similar: bool,
+        query_id: str,
+        i: int,
+        category_mapping: Dict[int, str]
+):
+    appearing_ids_anchor = [k for k, v in annot_anchor.items() if v[i] > 0]
+    appearing_ids_pick = [k for k, v in annot_pick.items() if v[i] > 0]
+
+    appearing_names_anchor = [category_mapping[id] for id in appearing_ids_anchor]
+    appearing_names_pick = [category_mapping[id] for id in appearing_ids_pick]
+
+    text_anchor = f"Anchor: {', '.join(appearing_names_anchor)}"
+    similarity = "Similar" if similar else "Dissimilar"
+    text_pick = f"{similarity}: {', '.join(appearing_names_pick)}"
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 10))
+
+    fig.suptitle(f"Query: {category_mapping[int(query_id)]}")
+
+    ax1.imshow(np.transpose(anchor, (1, 2, 0)))
+    ax1.set_title(text_anchor)
+    ax1.axis("off")
+
+    ax2.imshow(np.transpose(pick, (1, 2, 0)))
+    ax2.set_title(text_pick)
+    ax2.axis("off")
+
+
+def show_siamese_batch(siamese_batch: torch.Tensor, batch_size: int = 8):
+    siamese_batch = siamese_batch
+    anchor_batch, pick_batch = siamese_batch[0]
+    annot_anchor_batch, annot_pick_batch = siamese_batch[1]
+    similarity_batch = siamese_batch[2].numpy()
+    selected_id_batch = siamese_batch[3]
+    class_mapping = coco_id_class_mapping  # Load category mapping
+
+    for i in range(batch_size):
+        anchor = anchor_batch[i].numpy()
+        pick = pick_batch[i].numpy()
+
+        annot_anchor = annot_anchor_batch
+        annot_pick = annot_pick_batch
+        query_id = selected_id_batch[i]
+
+        visualize_duplet(anchor, pick, annot_anchor, annot_pick, not similarity_batch[i], query_id, i, class_mapping)
+        plt.show()
+
+
 # Plotting data
 def show_plot(iteration, loss):
     plt.plot(iteration, loss)
@@ -194,9 +249,7 @@ def main(cfg):
     example_batch = next(iter(vis_dataloader))
 
     # plot all the images
-    for i in range(8):
-        imshow_triplet(example_batch[0][i], example_batch[1][i], example_batch[2][i])
-    print(example_batch[1].numpy().reshape(-1))
+    show_siamese_batch(example_batch)
 
 
 if __name__ == "__main__":
