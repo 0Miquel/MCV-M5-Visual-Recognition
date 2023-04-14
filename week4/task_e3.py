@@ -1,6 +1,8 @@
 import argparse
 import glob
 import json
+import os
+import pickle
 import random
 import sys
 from collections import OrderedDict
@@ -8,6 +10,7 @@ from typing import Dict
 
 import albumentations as A
 import cv2
+import numpy as np
 import torch
 import torch.nn as nn
 from albumentations.pytorch import ToTensorV2
@@ -22,7 +25,7 @@ from week4.losses import ContrastiveLoss
 
 
 class SiameseCOCODataset(Dataset):
-    def __init__(self, cfg, phase, transform):
+    def __init__(self, cfg: Dict, phase: str = 'train', transform=None, inference: bool = False):
         self.mcv_ann_path = cfg["mcv_ann"]
         self.phase = phase
         self.transform = transform
@@ -32,6 +35,7 @@ class SiameseCOCODataset(Dataset):
         self.imgs_dir = cfg[phase + "_path"]
         self.imgs_path = glob.glob(f"{self.imgs_dir}*.jpg")
         self.imgs_path = [path.replace("\\", "/") for path in self.imgs_path]
+        self.inference = inference
 
     def __len__(self):
         return len(self.imgs_path)
@@ -66,8 +70,10 @@ class SiameseCOCODataset(Dataset):
         pick_img = cv2.imread(pick_img_path)[:, :, ::-1]
         transformed_img = self.transform(image=img)["image"]
         transformed_pick_img = self.transform(image=pick_img)["image"]
-
-        return transformed_img, transformed_pick_img, should_get_same_class
+        if not self.inference:
+            return transformed_img, transformed_pick_img, should_get_same_class
+        else:
+            return transformed_img, self._load_annot(img_id)
 
     def _load_annot(self, img_id: int) -> Dict[int, int]:
         """
@@ -95,6 +101,9 @@ class HeadlessResnet2(nn.Module):
                 name = k[6:]  # remove `model.`
                 new_state_dict[name] = v
             self.model.load_state_dict(new_state_dict)
+
+    def inference(self, x):
+        return self.model(x)
 
     def forward(self, x0, x1):
         output0 = self.model(x0)
@@ -137,19 +146,62 @@ def train(model, dataloader, optimizer, criterion, cfg):
         torch.save(model.state_dict(), f"model_epoch_{epoch}.pt")
 
 
+def evaluate_retrieval(model, dataloader, embedded_dataset, cfg):
+    """
+    Retrieves the k nearest images in the embedded space and evaluates the retrieval
+    :param model: model to evaluate
+    :param dataloader: dataloader of the dataset
+    :param embedded_dataset: configuration dictionary
+    :return: None
+    """
+
+
+
+def retrieve_dataset_embeddings(model: HeadlessResnet2, dataloader: DataLoader, out_path: str, cfg: Dict):
+    embeddings = []
+
+    if os.path.isfile(out_path):
+        print("Loading embeddings from file")
+        return np.load(out_path)
+
+    print("Retrieving dataset embeddings")
+    model.eval()
+    with torch.no_grad():
+        with tqdm(dataloader, unit="batch") as batch:
+            batch.set_description(f"Batches eval")
+            for imgs, annots in batch:
+                # Send the images to CUDA
+                embedded_imgs = imgs.to(cfg["device"])
+
+                output = model.inference(embedded_imgs).cpu().numpy()
+                for i, embedding in enumerate(output):
+                    annot = {k: int(v[i].numpy()) for k, v in annots.items()}
+                    embeddings.append((embedding, annot))
+    embedding = np.array(embeddings)
+    # Save the array to disk
+    np.save(out_path, embedding)
+    return embeddings
+
+
 def main(cfg):
     transform = A.Compose([
         A.Resize(224, 224),
         A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
         ToTensorV2(),
     ])
-    dataset = SiameseCOCODataset(cfg, "train", transform)
-    dataloader = DataLoader(dataset, shuffle=True, num_workers=2, batch_size=cfg["batch_size"])
-    model = HeadlessResnet2(weights_path=None, embedding_size=cfg["embedder_size"]).to(cfg["device"])
-    optimizer = optim.Adam(model.parameters(), lr=cfg["lr"])
-    criterion = ContrastiveLoss()
-
-    train(model, dataloader, optimizer, criterion, cfg)
+    if cfg["train"]:
+        model = HeadlessResnet2(weights_path=None, embedding_size=cfg["embedder_size"]).to(cfg["device"])
+        dataset = SiameseCOCODataset(cfg, "train", transform)
+        dataloader = DataLoader(dataset, shuffle=True, num_workers=2, batch_size=cfg["batch_size"])
+        optimizer = optim.Adam(model.parameters(), lr=cfg["lr"])
+        criterion = ContrastiveLoss()
+        train(model, dataloader, optimizer, criterion, cfg)
+    if cfg["evaluate"]:
+        model = HeadlessResnet2(weights_path=cfg['eval_weights'], embedding_size=cfg["embedder_size"]).to(cfg["device"])
+        eval_dataset = SiameseCOCODataset(cfg, "train", transform, inference=True)
+        eval_dataloader = DataLoader(eval_dataset, shuffle=True, num_workers=2, batch_size=cfg["batch_size"])
+        embedded_dataset = retrieve_dataset_embeddings(model, eval_dataloader, out_path=cfg["data_embeddings_path"], cfg=cfg)
+        evaluate_retrieval(model, eval_dataloader, embedded_dataset, cfg)
 
 
 if __name__ == "__main__":
