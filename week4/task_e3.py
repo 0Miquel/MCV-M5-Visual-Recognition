@@ -14,6 +14,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from albumentations.pytorch import ToTensorV2
+from sklearn.metrics import average_precision_score
+from sklearn.neighbors import NearestNeighbors
 from torch import optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import models
@@ -33,8 +35,12 @@ class SiameseCOCODataset(Dataset):
         self.classes = list(self.mcv_ann.keys())
 
         self.imgs_dir = cfg[phase + "_path"]
-        self.imgs_path = glob.glob(f"{self.imgs_dir}*.jpg")
-        self.imgs_path = [path.replace("\\", "/") for path in self.imgs_path]
+        self.imgs_to_load = []
+        for img_ids in self.mcv_ann.values():
+            for img_id in img_ids:
+                if img_id not in self.imgs_to_load:
+                    self.imgs_to_load.append(img_id)
+        self.imgs_path = [self.imgs_dir + f"COCO_{os.path.basename(os.path.normpath(self.imgs_dir))}_" + "{:012d}".format(img_to_load) + ".jpg" for img_to_load in self.imgs_to_load]
         self.inference = inference
 
     def __len__(self):
@@ -43,6 +49,11 @@ class SiameseCOCODataset(Dataset):
     def __getitem__(self, idx):
         img_path = self.imgs_path[idx]
         img_id = int(img_path.split("/")[-1].split(".")[0].split("_")[-1])
+        img = cv2.imread(img_path)[:, :, ::-1]
+        transformed_img = self.transform(image=img)["image"]
+
+        if self.inference:
+            return transformed_img, self._load_annot(img_id), img_path
 
         classes = [class_id for class_id, img_ids in self.mcv_ann.items() if img_id in img_ids]
 
@@ -65,15 +76,12 @@ class SiameseCOCODataset(Dataset):
                 negative_imgs = negative_union_imgs - positive_union_imgs
                 pick_img_id = random.choice(tuple(negative_imgs))
 
-        pick_img_path = self.imgs_dir + "COCO_train2014_" + "{:012d}".format(pick_img_id) + ".jpg"
-        img = cv2.imread(img_path)[:, :, ::-1]
+        pick_img_path = self.imgs_dir + f"COCO_{os.path.basename(os.path.normpath(self.imgs_dir))}_" + "{:012d}".format(pick_img_id) + ".jpg"
         pick_img = cv2.imread(pick_img_path)[:, :, ::-1]
-        transformed_img = self.transform(image=img)["image"]
         transformed_pick_img = self.transform(image=pick_img)["image"]
-        if not self.inference:
-            return transformed_img, transformed_pick_img, should_get_same_class
-        else:
-            return transformed_img, self._load_annot(img_id)
+
+        return transformed_img, transformed_pick_img, should_get_same_class
+
 
     def _load_annot(self, img_id: int) -> Dict[int, int]:
         """
@@ -155,6 +163,52 @@ def evaluate_retrieval(model, dataloader, embedded_dataset, cfg):
     :return: None
     """
 
+    # Build a nearest neighbors model using the embedding dataset
+    knn = NearestNeighbors(n_neighbors=int(cfg['k']), algorithm='ball_tree')
+    embeddings, annots, paths = zip(*embedded_dataset)
+    embeddings = np.array(embeddings)
+    knn = knn.fit(embeddings)
+
+    # Initialize lists for storing the ground truth annotations and retrieved images for each query
+    gt_list = []
+    pred_list = []
+
+    with torch.no_grad():
+        with tqdm(dataloader, unit="batch") as batch:
+            batch.set_description(f"Batches eval")
+            for imgs, annotations, imgs_id in batch:
+                # Send the images to CUDA
+                embedded_imgs = imgs.to(cfg["device"])
+
+                output = model.inference(embedded_imgs).cpu().numpy()
+                for i, embedding in enumerate(output):
+                    # Retrieve the k nearest neighbors for the embedding
+                    dists, indices = knn.kneighbors(embedding)
+
+                    # Get the ground truth annotations for the query image
+                    annot = {k: int(v[i].numpy()) for k, v in annotations.items()}
+                    gt_list.append(annot)
+
+                    # Get the retrieved images and their annotations
+                    pred = []
+                    for j in indices[0]:
+                        pred.append((annots[j], paths[j]))
+                    pred_list.append(pred)
+
+    return pred_list, gt_list
+
+    # Calculate the average precision (AP) for each query image
+    ap_list = []
+    for i in range(len(gt_list)):
+        ap = average_precision_score(gt_list[i], pred_list[i], average='macro')
+        ap_list.append(ap)
+
+    # Calculate the mean average precision (mAP) over all query images
+    mean_ap = sum(ap_list) / len(ap_list)
+    print(f"mAP: {mean_ap:.4f}")
+
+    return mean_ap
+
 
 
 def retrieve_dataset_embeddings(model: HeadlessResnet2, dataloader: DataLoader, out_path: str, cfg: Dict):
@@ -162,24 +216,24 @@ def retrieve_dataset_embeddings(model: HeadlessResnet2, dataloader: DataLoader, 
 
     if os.path.isfile(out_path):
         print("Loading embeddings from file")
-        return np.load(out_path)
+        return np.load(out_path, allow_pickle=True)
 
     print("Retrieving dataset embeddings")
     model.eval()
     with torch.no_grad():
         with tqdm(dataloader, unit="batch") as batch:
             batch.set_description(f"Batches eval")
-            for imgs, annots in batch:
+            for imgs, annots, imgs_paths in batch:
                 # Send the images to CUDA
                 embedded_imgs = imgs.to(cfg["device"])
 
                 output = model.inference(embedded_imgs).cpu().numpy()
                 for i, embedding in enumerate(output):
                     annot = {k: int(v[i].numpy()) for k, v in annots.items()}
-                    embeddings.append((embedding, annot))
+                    embeddings.append((embedding, annot, imgs_paths[i]))
     embedding = np.array(embeddings)
     # Save the array to disk
-    np.save(out_path, embedding)
+    np.save(out_path, embedding, allow_pickle=True)
     return embeddings
 
 
@@ -198,10 +252,14 @@ def main(cfg):
         train(model, dataloader, optimizer, criterion, cfg)
     if cfg["evaluate"]:
         model = HeadlessResnet2(weights_path=cfg['eval_weights'], embedding_size=cfg["embedder_size"]).to(cfg["device"])
-        eval_dataset = SiameseCOCODataset(cfg, "train", transform, inference=True)
-        eval_dataloader = DataLoader(eval_dataset, shuffle=True, num_workers=2, batch_size=cfg["batch_size"])
-        embedded_dataset = retrieve_dataset_embeddings(model, eval_dataloader, out_path=cfg["data_embeddings_path"], cfg=cfg)
-        evaluate_retrieval(model, eval_dataloader, embedded_dataset, cfg)
+
+        db_dataset = SiameseCOCODataset(cfg, "database", transform, inference=True)
+        db_dataloader = DataLoader(db_dataset, shuffle=False, num_workers=2, batch_size=cfg["batch_size"])
+        embedded_dataset = retrieve_dataset_embeddings(model, db_dataloader, out_path=cfg["data_embeddings_path"], cfg=cfg)
+
+        val_dataset = SiameseCOCODataset(cfg, "val", transform, inference=True)
+        val_dataloader = DataLoader(val_dataset, shuffle=False, num_workers=0, batch_size=cfg["batch_size"])
+        evaluate_retrieval(model, val_dataloader, embedded_dataset, cfg)
 
 
 if __name__ == "__main__":

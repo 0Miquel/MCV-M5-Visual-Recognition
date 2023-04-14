@@ -3,6 +3,7 @@ device: "cuda"
 
 train_path: "../dataset/coco2014/train2014/"
 val_path: "../dataset/coco2014/val2014/"
+database_path: "../dataset/coco2014/train2014/"
 train_ann_file: "../dataset/coco2014/annotations/instances_train2014.json"
 val_ann_file: "../dataset/coco2014/annotations/instances_val2014.json"
 mcv_ann: "../dataset/coco2014/mcv_image_retrieval_annotations.json"
@@ -14,5 +15,6 @@ lr: 0.001
 batch_size: 32
 num_epochs: 10
 embedder_size: 64
+k: 5
 
 
