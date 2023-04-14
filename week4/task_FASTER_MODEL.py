@@ -20,6 +20,9 @@ class TrunkFasterRCNN(nn.Module):
     def save_features(self, mod, inp, outp):
         self.features = outp
 
+    def inference(self, x):
+        return self.back(x)['pool'].view(8, -1)
+
     def forward(self, x0, x1):
         features_x0 = self.back(x0)['pool'].view(8, -1)
         features_x1 = self.back(x1)['pool'].view(8, -1)
