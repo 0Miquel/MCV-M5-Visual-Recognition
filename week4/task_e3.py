@@ -1,39 +1,24 @@
 import argparse
+import glob
 import json
+import random
 import sys
+from collections import OrderedDict
 from typing import Dict
 
-import matplotlib.pyplot as plt
-import numpy as np
-import random
-from PIL import Image
-import PIL.ImageOps
-
-import torch.nn as nn
-import torch
-from torchvision import models
-from collections import OrderedDict
-from torchvision.models import ResNet18_Weights
-import torchvision
-import torchvision.datasets as datasets
-from torch.utils.data import DataLoader, Dataset
-import torchvision.utils
-import torch
-from torch.autograd import Variable
-import torch.nn as nn
-from torch import optim
-import torch.nn.functional as F
-from week4.i_o import load_yaml_config
-import glob
-
-from week4.losses import ContrastiveLoss
-from week4.task_FASTER_MODEL import TrunkFasterRCNN
-
 import albumentations as A
-from albumentations.pytorch import ToTensorV2
-
 import cv2
+import torch
+import torch.nn as nn
+from albumentations.pytorch import ToTensorV2
+from torch import optim
+from torch.utils.data import DataLoader, Dataset
+from torchvision import models
+from torchvision.models import ResNet18_Weights
 from tqdm import tqdm
+
+from week4.i_o import load_yaml_config
+from week4.losses import ContrastiveLoss
 
 
 class SiameseCOCODataset(Dataset):
@@ -119,14 +104,14 @@ class HeadlessResnet2(nn.Module):
 
 def train(model, dataloader, optimizer, criterion, cfg):
     model.train()
-    # Iterate throught the epochs
+    # Iterate through the epochs
     for epoch in range(cfg["num_epochs"]):
         dataset_size = 0
         running_loss = 0
         # Iterate over batches
-        with tqdm(dataloader, unit="batch") as tepoch:
-            tepoch.set_description(f"Epoch {epoch + 1}/{cfg['num_epochs']} train")
-            for img0, img1, label in tepoch:
+        with tqdm(dataloader, unit="batch") as t_epoch:
+            t_epoch.set_description(f"Epoch {epoch + 1}/{cfg['num_epochs']} train")
+            for img0, img1, label in t_epoch:
                 # Send the images and labels to CUDA
                 img0, img1, label = img0.to(cfg["device"]), img1.to(cfg["device"]), label.to(cfg["device"])
 
@@ -148,7 +133,7 @@ def train(model, dataloader, optimizer, criterion, cfg):
                 dataset_size += output1.size(0)
                 running_loss += loss_contrastive.item() * output1.size(0)
                 epoch_loss = running_loss / dataset_size
-                tepoch.set_postfix({"loss": epoch_loss})
+                t_epoch.set_postfix({"loss": epoch_loss})
         torch.save(model.state_dict(), f"model_epoch_{epoch}.pt")
 
 
@@ -176,4 +161,3 @@ if __name__ == "__main__":
     config = load_yaml_config(config_path)
 
     main(config)
-
