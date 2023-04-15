@@ -1,8 +1,6 @@
 import argparse
-import glob
 import json
 import os
-import pickle
 import random
 import sys
 from collections import OrderedDict
@@ -14,7 +12,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 from albumentations.pytorch import ToTensorV2
-from sklearn.metrics import average_precision_score
 from sklearn.neighbors import NearestNeighbors
 from torch import optim
 from torch.utils.data import DataLoader, Dataset
@@ -40,7 +37,9 @@ class SiameseCOCODataset(Dataset):
             for img_id in img_ids:
                 if img_id not in self.imgs_to_load:
                     self.imgs_to_load.append(img_id)
-        self.imgs_path = [self.imgs_dir + f"COCO_{os.path.basename(os.path.normpath(self.imgs_dir))}_" + "{:012d}".format(img_to_load) + ".jpg" for img_to_load in self.imgs_to_load]
+        self.imgs_path = [
+            self.imgs_dir + f"COCO_{os.path.basename(os.path.normpath(self.imgs_dir))}_" + "{:012d}".format(
+                img_to_load) + ".jpg" for img_to_load in self.imgs_to_load]
         self.inference = inference
 
     def __len__(self):
@@ -76,12 +75,12 @@ class SiameseCOCODataset(Dataset):
                 negative_imgs = negative_union_imgs - positive_union_imgs
                 pick_img_id = random.choice(tuple(negative_imgs))
 
-        pick_img_path = self.imgs_dir + f"COCO_{os.path.basename(os.path.normpath(self.imgs_dir))}_" + "{:012d}".format(pick_img_id) + ".jpg"
+        pick_img_path = self.imgs_dir + f"COCO_{os.path.basename(os.path.normpath(self.imgs_dir))}_" + "{:012d}".format(
+            pick_img_id) + ".jpg"
         pick_img = cv2.imread(pick_img_path)[:, :, ::-1]
         transformed_pick_img = self.transform(image=pick_img)["image"]
 
         return transformed_img, transformed_pick_img, should_get_same_class
-
 
     def _load_annot(self, img_id: int) -> Dict[int, int]:
         """
@@ -154,12 +153,58 @@ def train(model, dataloader, optimizer, criterion, cfg):
         torch.save(model.state_dict(), f"model_epoch_{epoch}.pt")
 
 
+def calculate_precision(y_true, y_pred, k_values):
+    """
+    Calculates the precision@k for a list of true labels (y_true) and predicted labels (y_pred)
+    """
+    correct_list = []
+    for y_pred_i in y_pred:
+        pred_correct = 0
+        for k, v in y_true.items():
+            if v == 1 and y_pred_i[k] == 1:
+                pred_correct = 1
+                break
+        correct_list.append(pred_correct)
+
+    # calculate retrieval precision
+    precision = 0
+    for i in range(k_values):
+        precision += correct_list[i] / k_values
+    return precision
+
+
+def calculate_ap(y_true, y_pred):
+    """
+    Calculates the average precision (AP) for a list of true labels (y_true) and predicted labels (y_pred)
+    """
+    correct_list = []
+    for y_pred_i in y_pred:
+        pred_correct = 0
+        for k, v in y_true.items():
+            if v == 1 and y_pred_i[k] == 1:
+                pred_correct = 1
+                break
+        correct_list.append(pred_correct)
+
+    # calculate retrieval average precision
+    ap = 0
+    for i in range(len(correct_list)):
+        ap += correct_list[i] / (i + 1)
+
+    return ap
+
+
+def plot_retrieval(param, path_to_images, dists, cfg):
+    pass
+
+
 def evaluate_retrieval(model, dataloader, embedded_dataset, cfg):
     """
     Retrieves the k nearest images in the embedded space and evaluates the retrieval
     :param model: model to evaluate
-    :param dataloader: dataloader of the dataset
-    :param embedded_dataset: configuration dictionary
+    :param dataloader: dataloader of the dataset to evaluate
+    :param embedded_dataset: dataset with the embeddings
+    :param cfg: configuration dictionary
     :return: None
     """
 
@@ -171,8 +216,9 @@ def evaluate_retrieval(model, dataloader, embedded_dataset, cfg):
 
     # Initialize lists for storing the ground truth annotations and retrieved images for each query
     gt_list = []
-    pred_list = []
-
+    mean_ap_list = []
+    p_at_1_list = []
+    p_at_5_list = []
     with torch.no_grad():
         with tqdm(dataloader, unit="batch") as batch:
             batch.set_description(f"Batches eval")
@@ -181,34 +227,42 @@ def evaluate_retrieval(model, dataloader, embedded_dataset, cfg):
                 embedded_imgs = imgs.to(cfg["device"])
 
                 output = model.inference(embedded_imgs).cpu().numpy()
-                for i, embedding in enumerate(output):
-                    # Retrieve the k nearest neighbors for the embedding
-                    dists, indices = knn.kneighbors(embedding)
+
+                q_dists, q_indices = knn.kneighbors(output)
+                for i, (dists, indices) in enumerate(zip(q_dists, q_indices)):
 
                     # Get the ground truth annotations for the query image
-                    annot = {k: int(v[i].numpy()) for k, v in annotations.items()}
-                    gt_list.append(annot)
+                    y_true = {k: int(v[i].numpy()) for k, v in annotations.items()}
+                    gt_list.append(y_true)
 
                     # Get the retrieved images and their annotations
                     pred = []
-                    for j in indices[0]:
-                        pred.append((annots[j], paths[j]))
-                    pred_list.append(pred)
+                    path_to_images = []
+                    for j in indices:
+                        pred.append(annots[j])
+                        path_to_images.append(paths[j])
 
-    return pred_list, gt_list
+                    # Plot the query image and the retrieved images
+                    if cfg["plot_retrieval"]:
+                        plot_retrieval(imgs_id[i], path_to_images, dists, cfg)
 
-    # Calculate the average precision (AP) for each query image
-    ap_list = []
-    for i in range(len(gt_list)):
-        ap = average_precision_score(gt_list[i], pred_list[i], average='macro')
-        ap_list.append(ap)
+                    # Calculate AP, precision@1, and precision@5
+                    ap = calculate_ap(y_true, pred)
+                    precision_at_1 = calculate_precision(y_true, pred, k_values=1)
+                    precision_at_5 = calculate_precision(y_true, pred, k_values=5)
 
-    # Calculate the mean average precision (mAP) over all query images
-    mean_ap = sum(ap_list) / len(ap_list)
-    print(f"mAP: {mean_ap:.4f}")
+                    mean_ap_list.append(ap)
+                    p_at_1_list.append(precision_at_1)
+                    p_at_5_list.append(precision_at_5)
+                    batch.set_postfix({"AP@5": ap,
+                                       "precision@1": precision_at_1,
+                                       "precision@5": precision_at_5})
 
-    return mean_ap
+    mean_ap = sum(mean_ap_list) / len(mean_ap_list)
+    mean_p_at_1 = sum(p_at_1_list) / len(p_at_1_list)
+    mean_p_at_5 = sum(p_at_5_list) / len(p_at_5_list)
 
+    return mean_ap, mean_p_at_1, mean_p_at_5
 
 
 def retrieve_dataset_embeddings(model: HeadlessResnet2, dataloader: DataLoader, out_path: str, cfg: Dict):
@@ -255,11 +309,13 @@ def main(cfg):
 
         db_dataset = SiameseCOCODataset(cfg, "database", transform, inference=True)
         db_dataloader = DataLoader(db_dataset, shuffle=False, num_workers=2, batch_size=cfg["batch_size"])
-        embedded_dataset = retrieve_dataset_embeddings(model, db_dataloader, out_path=cfg["data_embeddings_path"], cfg=cfg)
+        embedded_dataset = retrieve_dataset_embeddings(model, db_dataloader, out_path=cfg["data_embeddings_path"],
+                                                       cfg=cfg)
 
         val_dataset = SiameseCOCODataset(cfg, "val", transform, inference=True)
         val_dataloader = DataLoader(val_dataset, shuffle=False, num_workers=0, batch_size=cfg["batch_size"])
-        evaluate_retrieval(model, val_dataloader, embedded_dataset, cfg)
+        m_ap, m_p_at_1, m_p_at_5 = evaluate_retrieval(model, val_dataloader, embedded_dataset, cfg)
+        print(f"mAP@5: {m_ap:.4f} | mean precision@1: {m_p_at_1:.4f} | mean precision@5: {m_p_at_5:.4f}")
 
 
 if __name__ == "__main__":
