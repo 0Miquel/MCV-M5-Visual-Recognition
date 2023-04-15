@@ -16,6 +16,6 @@ batch_size: 32
 num_epochs: 10
 embedder_size: 64
 k: 5
-plot_retrieval: False
+plot_retrieval: True
 
 

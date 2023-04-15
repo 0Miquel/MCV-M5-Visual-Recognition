@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from albumentations.pytorch import ToTensorV2
+from matplotlib import pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 from torch import optim
 from torch.utils.data import DataLoader, Dataset
@@ -194,8 +195,36 @@ def calculate_ap(y_true, y_pred):
     return ap
 
 
-def plot_retrieval(param, path_to_images, dists, cfg):
-    pass
+def plot_retrieval(query_img_path, path_to_images_retrieved_images, dists, query_gt, retrieved_gt):
+    """
+    Plots the retrieval results
+    :param query_img_path: query image path
+    :param path_to_images_retrieved_images: list of paths to the retrieved images
+    :param dists: list of distances to the retrieved images
+    :param query_gt: ground truth of the query image
+    :param retrieved_gt: list of ground truths of the retrieved images
+    """
+    # Plot the query image and its ground truth
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    query_img = cv2.imread(query_img_path)[:, :, ::-1]
+    ax.imshow(query_img)
+    ax.set_title("Query image")
+    ax.axis("off")
+    query_items = query_gt.get('Id', [])
+    if query_items:
+        ax.text(0.5, -0.1, f"Query items: {query_items}", transform=ax.transAxes, ha="center")
+
+    # Plot the retrieved images and their ground truth
+    fig, ax = plt.subplots(1, len(path_to_images_retrieved_images), figsize=(20, 20))
+    for i, path in enumerate(path_to_images_retrieved_images):
+        img = cv2.imread(path)[:, :, ::-1]
+        ax[i].imshow(img)
+        ax[i].set_title(f"Distance: {dists[i]:.2f}")
+        ax[i].axis("off")
+        retrieved_items = retrieved_gt[i].get('Id', [])
+        if retrieved_items:
+            ax[i].text(0.5, -0.1, f"Retrieved items: {retrieved_items}", transform=ax[i].transAxes, ha="center")
+    plt.show()
 
 
 def evaluate_retrieval(model, dataloader, embedded_dataset, cfg):
@@ -244,7 +273,7 @@ def evaluate_retrieval(model, dataloader, embedded_dataset, cfg):
 
                     # Plot the query image and the retrieved images
                     if cfg["plot_retrieval"]:
-                        plot_retrieval(imgs_id[i], path_to_images, dists, cfg)
+                        plot_retrieval(imgs_id[i], path_to_images, dists, y_true, pred)
 
                     # Calculate AP, precision@1, and precision@5
                     ap = calculate_ap(y_true, pred)
