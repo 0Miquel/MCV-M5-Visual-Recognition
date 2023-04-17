@@ -64,5 +64,14 @@ https://docs.google.com/presentation/d/1Wicc6TT8sVbltHl0nESWz1UxX_8PSeO7KW8COBSk
 ## Week 4
 TODO
 
+```
+cd week3
+python task_e.py
+```
+### Power Point Presentation
+In the following link you can find the read-only Google Slides presentation for this week:
+https://docs.google.com/presentation/d/1NuAMZuHNXXfummQBfeOsSC9dsxs2dcrOulw_pFhopKU/edit?usp=sharing
+
+
 ## Week 5
 TODO
