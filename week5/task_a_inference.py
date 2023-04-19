@@ -40,7 +40,7 @@ def get_transforms():
 def image2text_inference(image_path, model, captions):
     transform = get_transforms()["val"]
     image = Image.open(image_path).convert('RGB')
-    image_tensor = transform(image).unsqueeze(0).to("cuda")
+    image_tensor = transform(image).unsqueeze(0)#.to("cuda")
     image_embedding = model.get_embedding_image(image_tensor)
 
     # Compute cosine similarity between image embedding and all caption embeddings
@@ -48,17 +48,17 @@ def image2text_inference(image_path, model, captions):
     for caption in captions:
         caption_embedding = model.get_embedding_text([caption])[0]
         caption_embeddings.append(caption_embedding)
-    caption_embeddings = torch.Tensor(caption_embeddings).to(model.device)
+    caption_embeddings = torch.Tensor(caption_embeddings)#.to(model.device)
     sim_scores = torch.nn.functional.cosine_similarity(image_embedding, caption_embeddings)
 
-    # Get index of highest similarity score and return corresponding caption
-    max_idx = sim_scores.argmax()
-    predicted_caption = captions[max_idx]
+    # Get index of the top 5 captions with less distances in sim scores
+    top5 = np.argsort(sim_scores.cpu().detach().numpy())[-5:]
+    predicted_caption = captions[top5[0]]
     return predicted_caption
 
 def main(cfg):
     # MODEL
-    model = TripletNetIm2Text(EmbeddingNetImage(out_features=128),
+    model = TripletNetIm2Text(EmbeddingNetImage(out_features=300),
                               EmbeddingNetText(weights=cfg["fasttext_path"], out_features=300))
     model.load_state_dict(torch.load(cfg["save_path"]))
 
