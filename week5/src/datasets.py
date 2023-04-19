@@ -71,13 +71,13 @@ class TripletText2Im(Dataset):
         self.annotations_an = self.annotations['annotations']
 
         # Create dictionary where key is image id and value is a list of the captions related to that image
-        self.caption2img = {}
+        self.img2ann = {}
         for i in range(len(self.annotations_an)):
             img_id = self.annotations_an[i]['image_id']
-            if img_id not in self.caption2img:
-                self.caption2img[img_id] = [i]
+            if img_id not in self.img2ann:
+                self.img2ann[img_id] = [i]
             else:
-                self.caption2img[img_id].append(i)
+                self.img2ann[img_id].append(i)
 
     def __len__(self):
         return len(self.annotations_an)
@@ -86,7 +86,7 @@ class TripletText2Im(Dataset):
         anchor = self.annotations_an[index]
         anchor_caption = anchor['caption']
         positive_img_id = anchor['image_id']
-        #create positive image path with positiva img id, "COCO_train2014_" and then positive img id up to 12 digits with 0s, ending in jpg
+        # create positive image path with positiva img id, "COCO_train2014_" and then positive img id up to 12 digits with 0s, ending in jpg
         positive_img_path = self.img_dir + '/' + 'COCO_train2014_' + str(positive_img_id).zfill(12) + '.jpg'
 
         positive_img = Image.open(positive_img_path).convert('RGB')
@@ -97,13 +97,12 @@ class TripletText2Im(Dataset):
         #get a random key from caption2img dict that is not positive_img_id
         negative_img_id = positive_img_id
         while negative_img_id == positive_img_id:
-            negative_img_id = random.choice(list(self.caption2img.keys()))
+            negative_img_id = random.choice(list(self.img2ann.keys()))
         negative_img_path = self.img_dir + '/' + 'COCO_train2014_' + str(negative_img_id).zfill(12) + '.jpg'
 
         negative_img = Image.open(negative_img_path).convert('RGB')
         if self.transform is not None:
             negative_img = self.transform(negative_img)
-
 
         # Lower case
         anchor_caption = anchor_caption.lower()

@@ -1,6 +1,7 @@
 import torch.nn as nn
 from torchvision import models
 import fasttext
+import numpy as np
 
 
 class EmbeddingNetImage(nn.Module):
@@ -20,15 +21,20 @@ class EmbeddingNetImage(nn.Module):
 class EmbeddingNetText(nn.Module):
     def __init__(self, weights, out_features):  # type = 'FastText' or 'BERT'
         super(EmbeddingNetText, self).__init__()
-
         self.model = fasttext.load_model(weights)
-        self.fc = nn.Linear(300, out_features)
 
     def forward(self, x):
-        output = self.model[x]
-        output = self.fc(output)
+        outputs = np.empty((len(x), 300))
+        # x is a tuple of N strings, need to return N feature vectors
+        for i, text in enumerate(x):
+            words_features = []
+            words = text.split(" ")
+            for word in words:
+                output = self.model[word]
+                words_features.append(output)
+            outputs[i] = np.array(words_features).mean(axis=0)
 
-        return output
+        return outputs
 
 
 class TripletNetIm2Text(nn.Module):
