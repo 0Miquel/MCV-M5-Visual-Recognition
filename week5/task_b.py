@@ -81,8 +81,8 @@ def train_epoch(dataloader, model, optimizer, scheduler, criterion, cfg, epoch):
             current_lr = optimizer.param_groups[0]['lr']
             tepoch.set_postfix({"loss": epoch_loss, "lr": current_lr})
 
-            if count == 10:
-                break
+            # if count == 10:
+            #     break
 
     return {"train/loss": epoch_loss, "train/lr": current_lr}
 
@@ -110,8 +110,8 @@ def val_epoch(dataloader, model, criterion, cfg, epoch):
                 epoch_loss = running_loss / dataset_size
                 tepoch.set_postfix({"loss": epoch_loss})
 
-                if count == 10:
-                    break
+                # if count == 10:
+                #     break
 
     return {"val/loss": epoch_loss}
 
