@@ -86,7 +86,8 @@ class TripletText2Im(Dataset):
         anchor = self.annotations_an[index]
         anchor_caption = anchor['caption']
         positive_img_id = anchor['image_id']
-        # create positive image path with positiva img id, "COCO_train2014_" and then positive img id up to 12 digits with 0s, ending in jpg
+        # create positive image path with positiva img id, "COCO_train2014_" and
+        # then positive img id up to 12 digits with 0s, ending in jpg
         positive_img_path = self.img_dir + '/' + 'COCO_train2014_' + str(positive_img_id).zfill(12) + '.jpg'
 
         positive_img = Image.open(positive_img_path).convert('RGB')
@@ -94,7 +95,7 @@ class TripletText2Im(Dataset):
             positive_img = self.transform(positive_img)
 
         # Choose randomly one caption that is not the same as the positive caption
-        #get a random key from caption2img dict that is not positive_img_id
+        # get a random key from caption2img dict that is not positive_img_id
         negative_img_id = positive_img_id
         while negative_img_id == positive_img_id:
             negative_img_id = random.choice(list(self.img2ann.keys()))

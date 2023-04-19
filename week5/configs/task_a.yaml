@@ -1,3 +1,6 @@
+device: cuda
+mode: train  # train or evaluate
+
 # DATASET
 train_instances: ../dataset/COCO/instances_train2014.json
 val_instances: ../dataset/COCO/instances_val2014.json
@@ -9,9 +12,6 @@ val_dir: ../dataset/COCO/val2014
 # MODEL
 model_text: models/fasttext_wiki.en.bin
 embedding_size: 300  # must be 300 if using fasttext
-
-
-device: cuda
 
 # OPTIMIZER
 lr: 0.001
