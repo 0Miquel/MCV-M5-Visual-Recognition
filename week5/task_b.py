@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 import os
+import wandb
 
 from src.models import EmbeddingNetImage, EmbeddingNetText, TripletNetText2Im
 from src.utils_io import load_yaml_config
@@ -38,12 +39,16 @@ def fit(train_dl, val_dl, model, optimizer, scheduler, criterion, cfg):
     os.makedirs("models", exist_ok=True)
     best_loss = 100000000
     for i in range(cfg["num_epochs"]):
-        train_epoch(train_dl, model, optimizer, scheduler, criterion, cfg, i)
-        new_loss = val_epoch(val_dl, model, criterion, cfg, i)
-
+        train_metrics = train_epoch(train_dl, model, optimizer, scheduler, criterion, cfg, i)
+        val_metrics = val_epoch(val_dl, model, criterion, cfg, i)
+        # save model if new is best
+        new_loss = val_metrics["val/loss"]
         if new_loss < best_loss:
             best_loss = new_loss
             torch.save(model.state_dict(), cfg["save_path"])
+        # log metrics
+        train_metrics.update(val_metrics)
+        wandb.log(train_metrics)
 
 
 def train_epoch(dataloader, model, optimizer, scheduler, criterion, cfg, epoch):
@@ -79,6 +84,8 @@ def train_epoch(dataloader, model, optimizer, scheduler, criterion, cfg, epoch):
             if count == 10:
                 break
 
+    return {"train/loss": epoch_loss, "train/lr": current_lr}
+
 
 def val_epoch(dataloader, model, criterion, cfg, epoch):
     running_loss = 0
@@ -106,10 +113,11 @@ def val_epoch(dataloader, model, criterion, cfg, epoch):
                 if count == 10:
                     break
 
-    return epoch_loss
+    return {"val/loss": epoch_loss}
 
 
 def main(cfg):
+    wandb.init(entity="bipulantes", project="Week5-TaskB")
     # DATASET
     transform = get_transforms()
 

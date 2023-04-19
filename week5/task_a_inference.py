@@ -16,6 +16,7 @@ from src.models import EmbeddingNetImage, EmbeddingNetText, TripletNetIm2Text
 from src.utils_io import load_yaml_config
 from src.datasets import TripletIm2Text, TripletText2Im
 
+
 def get_transforms():
     augmentations = {
         "train":
@@ -56,6 +57,7 @@ def image2text_inference(image_path, model, captions):
     predicted_caption = captions[top5[0]]
     return predicted_caption
 
+
 def main(cfg):
     # MODEL
     model = TripletNetIm2Text(EmbeddingNetImage(out_features=300),
@@ -71,9 +73,6 @@ def main(cfg):
     image_path = cfg["val_dir"]+'COCO_val2014_000000000073.jpg'
     predicted_caption = image2text_inference(image_path, model, captions)
     print(predicted_caption)
-
-
-
 
 
 if __name__ == "__main__":
