@@ -1,20 +1,22 @@
 device: "cuda"
 
 
-train_path: "../dataset/coco2014/train2014/"
-val_path: "../dataset/coco2014/val2014/"
-database_path: "../dataset/coco2014/train2014/"
-train_ann_file: "../dataset/coco2014/annotations/instances_train2014.json"
-val_ann_file: "../dataset/coco2014/annotations/instances_val2014.json"
-mcv_ann: "../dataset/coco2014/mcv_image_retrieval_annotations.json"
-data_embeddings_path: "../dataset/coco2014/coco2014_train_embeddings.npy"
-train: False
+train_path: "D:/datasets_diskD/train2014/"
+val_path: "D:/datasets_diskD/val2014/"
+database_path: "D:/datasets_diskD/train2014/"
+train_captions_path: "D:/datasets_diskD/annotations/captions_train2014.json"
+val_captions_path: "D:/datasets_diskD/annotations/captions_val2014.json"
+mcv_ann: "D:/datasets_diskD/annotations/mcv_image_retrieval_annotations.json"
+
+
+train: True
 evaluate: True
-eval_weights: "models/siamese/model_epoch_0.pt"
+save_weights: "weights/img2txt_weights.pth"
 lr: 0.001
 batch_size: 32
 num_epochs: 10
 embedder_size: 64
 k: 5
 plot_retrieval: True
+grad_clip: 5
 
