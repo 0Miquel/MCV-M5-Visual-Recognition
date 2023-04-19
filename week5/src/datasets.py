@@ -60,7 +60,8 @@ class TripletIm2Text(Dataset):
 
 
 class TripletText2Im(Dataset):
-    def __init__(self, ann_file, img_dir, transform=None):
+    def __init__(self, ann_file, img_dir, phase, transform=None):
+        self.phase = phase
         self.img_dir = img_dir
         self.transform = transform
 
@@ -88,7 +89,7 @@ class TripletText2Im(Dataset):
         positive_img_id = anchor['image_id']
         # create positive image path with positiva img id, "COCO_train2014_" and
         # then positive img id up to 12 digits with 0s, ending in jpg
-        positive_img_path = self.img_dir + '/' + 'COCO_train2014_' + str(positive_img_id).zfill(12) + '.jpg'
+        positive_img_path = self.img_dir + '/' + 'COCO_' + self.phase + '2014_' + str(positive_img_id).zfill(12) + '.jpg'
 
         positive_img = Image.open(positive_img_path).convert('RGB')
         if self.transform is not None:
@@ -99,7 +100,7 @@ class TripletText2Im(Dataset):
         negative_img_id = positive_img_id
         while negative_img_id == positive_img_id:
             negative_img_id = random.choice(list(self.img2ann.keys()))
-        negative_img_path = self.img_dir + '/' + 'COCO_train2014_' + str(negative_img_id).zfill(12) + '.jpg'
+        negative_img_path = self.img_dir + '/' + 'COCO_' + self.phase + '2014_' + str(negative_img_id).zfill(12) + '.jpg'
 
         negative_img = Image.open(negative_img_path).convert('RGB')
         if self.transform is not None:

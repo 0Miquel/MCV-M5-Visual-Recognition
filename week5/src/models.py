@@ -56,9 +56,9 @@ class TripletNetIm2Text(nn.Module):
         return self.embedding_net_text(x)
 
 
-class TripletNetText2Img(nn.Module):
+class TripletNetText2Im(nn.Module):
     def __init__(self, embedding_net_image, embedding_net_text):
-        super(TripletNetText2Img, self).__init__()
+        super(TripletNetText2Im, self).__init__()
         self.embedding_net_image = embedding_net_image
         self.embedding_net_text = embedding_net_text
 
