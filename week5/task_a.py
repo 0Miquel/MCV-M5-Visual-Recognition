@@ -7,8 +7,9 @@ from src.datasets import TripletIm2Text, TripletText2Im
 
 
 def main(cfg):
-    dataset = TripletIm2Text(cfg['train_captions'], cfg['train_dir'])
+    dataset = TripletText2Im(cfg['train_captions'], cfg['train_dir'])
     a = dataset[0]
+    print(a)
 
 
 if __name__ == "__main__":
