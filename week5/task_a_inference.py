@@ -54,8 +54,11 @@ def image2text_inference(image_path, model, captions):
 
     # Get index of the top 5 captions with less distances in sim scores
     top5 = np.argsort(sim_scores.cpu().detach().numpy())[-5:]
-    predicted_caption = captions[top5[0]]
-    return predicted_caption
+    top5_captions = [captions[i] for i in top5]
+
+    last5 = np.argsort(sim_scores.cpu().detach().numpy())[:5]
+    last5_captions = [captions[i] for i in last5]
+    return top5_captions, last5_captions
 
 
 def main(cfg):
@@ -71,8 +74,9 @@ def main(cfg):
 
     # Predict caption for a new image
     image_path = cfg["val_dir"]+'COCO_val2014_000000000073.jpg'
-    predicted_caption = image2text_inference(image_path, model, captions)
-    print(predicted_caption)
+    predicted_caption, lastcaptions = image2text_inference(image_path, model, captions)
+    print("predicted: ",predicted_caption)
+    print("worst captions: ",lastcaptions)
 
 
 if __name__ == "__main__":
