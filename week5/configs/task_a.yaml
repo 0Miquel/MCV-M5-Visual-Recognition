@@ -1,0 +1,6 @@
+train_instances: ../dataset/COCO/instances_train2014.json
+val_instances: ../dataset/COCO/instances_val2014.json
+train_captions: ../dataset/COCO/captions_train2014.json
+val_captions: ../dataset/COCO/captions_val2014.json
+train_dir: ../dataset/COCO/train2014
+val_dir: ../dataset/COCO/val2014
