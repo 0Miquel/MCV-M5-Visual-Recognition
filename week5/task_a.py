@@ -33,21 +33,25 @@ def get_transforms():
     return augmentations
 
 
-def fit(dataloader, model, optimizer, scheduler, criterion, cfg):
-    if cfg["mode"] == "train":
-        for i in range(cfg["num_epochs"]):
-            train_epoch(dataloader, model, optimizer, scheduler, criterion, cfg, i)
-    elif cfg["mode"] == "evaluate":
-        val_epoch(dataloader, model, criterion, cfg)
+def fit(train_dl, val_dl, model, optimizer, scheduler, criterion, cfg):
+    best_loss = 100000000
+    for i in range(cfg["num_epochs"]):
+        train_epoch(train_dl, model, optimizer, scheduler, criterion, cfg, i)
+        new_loss = val_epoch(val_dl, model, criterion, cfg, i)
+
+        if new_loss < best_loss:
+            best_loss = new_loss
+            torch.save(model.state_dict(), cfg["save_path"])
 
 
 def train_epoch(dataloader, model, optimizer, scheduler, criterion, cfg, epoch):
     running_loss = 0
     dataset_size = 0
-
+    count = 0
     with tqdm(dataloader, unit="batch") as tepoch:
         tepoch.set_description(f"Epoch {epoch + 1}/{cfg['num_epochs']} train")
         for im, cap1, cap2 in tepoch:
+            count += 1
             im = im.to(cfg["device"])
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -70,15 +74,19 @@ def train_epoch(dataloader, model, optimizer, scheduler, criterion, cfg, epoch):
             current_lr = optimizer.param_groups[0]['lr']
             tepoch.set_postfix({"loss": epoch_loss, "lr": current_lr})
 
+            # if count == 10:
+            #     break
 
-def val_epoch(dataloader, model, criterion, cfg):
+
+def val_epoch(dataloader, model, criterion, cfg, epoch):
     running_loss = 0
     dataset_size = 0
-
+    count = 0
     with torch.no_grad():
         with tqdm(dataloader, unit="batch") as tepoch:
-            tepoch.set_description(f"Evaluating validation set")
+            tepoch.set_description(f"Epoch {epoch + 1}/{cfg['num_epochs']} val")
             for im, cap1, cap2 in tepoch:
+                count += 1
                 im = im.to(cfg["device"])
                 # forward
                 feat_im, feat_cap1, feat_cap2 = model(im, cap1, cap2)
@@ -93,16 +101,21 @@ def val_epoch(dataloader, model, criterion, cfg):
                 epoch_loss = running_loss / dataset_size
                 tepoch.set_postfix({"loss": epoch_loss})
 
+                # if count == 10:
+                #     break
+
+    return epoch_loss
+
 
 def main(cfg):
     # DATASET
     transform = get_transforms()
-    if cfg["mode"] == "train":
-        dataset = TripletIm2Text(cfg['train_captions'], cfg['train_dir'], transform=transform["train"])
-        dataloader = DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=True)
-    elif cfg["mode"] == "evaluate":
-        dataset = TripletIm2Text(cfg['val_captions'], cfg['val_dir'], transform=transform["val"])
-        dataloader = DataLoader(dataset, batch_size=cfg["batch_size"], shuffle=False)
+
+    train_dataset = TripletIm2Text(cfg['train_captions'], cfg['train_dir'], transform=transform["train"])
+    train_dl = DataLoader(train_dataset, batch_size=cfg["batch_size"], shuffle=True)
+
+    val_dataset = TripletIm2Text(cfg['val_captions'], cfg['val_dir'], transform=transform["val"])
+    val_dl = DataLoader(val_dataset, batch_size=cfg["batch_size"], shuffle=False)
 
     # MODEL
     image_embedder = EmbeddingNetImage(cfg["embedding_size"]).to(cfg["device"])
@@ -112,13 +125,13 @@ def main(cfg):
     # OPTIMIZER
     optimizer = optim.Adam(model.parameters(), cfg["lr"])
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=cfg["max_lr"],
-                                              steps_per_epoch=len(dataset) // cfg["batch_size"],
+                                              steps_per_epoch=len(train_dataset) // cfg["batch_size"],
                                               epochs=cfg["num_epochs"])
 
     # LOSS
     criterion = nn.TripletMarginLoss(margin=1.0, p=2)
 
-    fit(dataloader, model, optimizer, scheduler, criterion, cfg)
+    fit(train_dl, val_dl, model, optimizer, scheduler, criterion, cfg)
 
 
 if __name__ == "__main__":

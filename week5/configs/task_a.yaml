@@ -1,5 +1,5 @@
 device: cuda
-mode: train  # train or evaluate
+save_path: models/best_task_a.pt
 
 # DATASET
 train_instances: ../dataset/COCO/instances_train2014.json
