@@ -1,38 +1,18 @@
 import argparse
+import os
 import sys
-from torchvision import transforms
-from torch import optim
-from torch.utils.data import DataLoader
+
 import torch
 import torch.nn as nn
-from tqdm import tqdm
-import os
 import wandb
+from torch import optim
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
+from src.datasets import TripletText2Im
 from src.models import EmbeddingNetImage, EmbeddingNetText, TripletNetText2Im
 from src.utils_io import load_yaml_config
-from src.datasets import TripletText2Im
-
-
-def get_transforms():
-    augmentations = {
-        "train":
-            transforms.Compose([
-                transforms.ColorJitter(brightness=.3, hue=.3),
-                transforms.RandomRotation(degrees=15),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ]),
-        "val":
-            transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
-    }
-    return augmentations
+from week5.task_a import get_transforms
 
 
 def fit(train_dl, val_dl, model, optimizer, scheduler, criterion, cfg):
