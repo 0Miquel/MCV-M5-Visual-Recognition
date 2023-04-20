@@ -2,7 +2,28 @@ import torch.nn as nn
 from torchvision import models
 import fasttext
 import numpy as np
+import torch
+from transformers import AutoTokenizer, AutoModel
 
+
+class EmbeddingNetTextBERT(nn.Module):
+    def __init__(self, model_name, out_features):
+        super(EmbeddingNetTextBERT, self).__init__()
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name)
+        self.out_features = out_features
+
+    def forward(self, x):
+        input_ids = self.tokenizer.batch_encode_plus(
+            x,
+            padding=True,
+            truncation=True,
+            return_tensors='pt'
+        )['input_ids'].to(self.model.device)
+        outputs = self.model(input_ids)[0]
+        outputs = outputs[:, 0, :]  # use the [CLS] token representation
+        outputs = torch.nn.functional.normalize(outputs, p=2, dim=1)  # normalize embeddings
+        return outputs
 
 class EmbeddingNetImage(nn.Module):
     def __init__(self, out_features, pretrained=True):  # dim_out_fc = 'as_image' or 'as_text'

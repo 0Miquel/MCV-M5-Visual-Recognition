@@ -1,0 +1,18 @@
+device: cuda
+save_path: models/best_task_c.pt
+
+# DATASET
+train_dir: "D:/datasets_diskD/train2014/"
+val_dir: "D:/datasets_diskD/val2014/"
+database_path: "D:/datasets_diskD/train2014/"
+train_captions: "D:/datasets_diskD/annotations/captions_train2014.json"
+val_captions: "D:/datasets_diskD/annotations/captions_val2014.json"
+mcv_ann: "D:/datasets_diskD/annotations/mcv_image_retrieval_annotations.json"
+# MODEL
+embedding_size: 768  # must be 300 if using fasttext
+
+# OPTIMIZER
+lr: 0.001
+max_lr: 0.01
+num_epochs: 10
+batch_size: 32

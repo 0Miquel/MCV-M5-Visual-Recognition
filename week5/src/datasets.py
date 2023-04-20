@@ -26,7 +26,7 @@ class TripletIm2Text(Dataset):
                 self.img2ann[img_id].append(i)
 
     def __len__(self):
-        return len(self.images)
+        return int(len(self.images)*0.1)
 
     def __getitem__(self, index):
         img_path = self.img_dir + '/' + self.images[index]['file_name']
@@ -81,7 +81,7 @@ class TripletText2Im(Dataset):
                 self.img2ann[img_id].append(i)
 
     def __len__(self):
-        return len(self.annotations_an)
+        return int(len(self.annotations_an)*0.1)
 
     def __getitem__(self, index):
         anchor = self.annotations_an[index]
