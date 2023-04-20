@@ -1,0 +1,22 @@
+# DATASET
+train_captions: ../dataset/coco2014/captions_train2014.json
+val_captions: ../dataset/coco2014/captions_val2014.json
+train_dir: ../dataset/coco2014/train2014
+val_dir: ../dataset/coco2014/val2014/
+
+# MODEL
+device: cuda
+fasttext_path: models/best_task_c.pt
+embedding_size: 300  # must be 300 if using fasttext
+model_path: models/best_task_c.pt
+
+# OPTIMIZER
+lr: 0.001
+max_lr: 0.01
+num_epochs: 10
+batch_size: 32
+
+# EVALUATION
+database_path: results/database.npy
+type: text2image
+visualize: True
