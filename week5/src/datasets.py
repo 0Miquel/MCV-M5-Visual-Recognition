@@ -134,7 +134,7 @@ def create_caption_db(model: TripletNetIm2Text, captions: Dict, out_path: str, d
     caption_embeddings = []
     for cap_id, caption in tqdm(captions.items()):
         if device == 'cpu':
-            caption_embedding = model.get_embedding_text([caption])[0]
+            caption_embedding = np.array(model.get_embedding_text([caption])[0])
         else:
             caption_embedding = model.get_embedding_text([caption])[0].cpu().detach().numpy()
         caption_embeddings.append((caption_embedding, cap_id))
