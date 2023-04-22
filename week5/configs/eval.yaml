@@ -14,3 +14,4 @@ database_path: /export/home/group02/MCV-M5-Visual-Recognition/week5/results/fast
 type: text2image
 visualize: False
 text_encoder: fasttext
+batch_size: 32
