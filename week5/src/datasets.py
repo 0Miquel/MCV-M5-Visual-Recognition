@@ -66,7 +66,7 @@ class TripletIm2Text(Dataset):
         if not self.evaluation:
             return image, positive_caption, negative_caption
         else:
-            captions = self.img2ann[img_id][:5]
+            captions = [self.annotations_an[i]['id'] for i in self.img2ann[img_id][:5]]
             return image, captions
 
 
