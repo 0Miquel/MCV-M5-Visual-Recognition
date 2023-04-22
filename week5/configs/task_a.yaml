@@ -1,20 +1,23 @@
 device: cuda
-save_path: models/best_task_a.pt
+save_path: models/best_task_c.pt
 
 # DATASET
-train_instances: ../dataset/COCO/instances_train2014.json
-val_instances: ../dataset/COCO/instances_val2014.json
-train_captions: ../dataset/COCO/captions_train2014.json
-val_captions: ../dataset/COCO/captions_val2014.json
-train_dir: ../dataset/COCO/train2014
-val_dir: ../dataset/COCO/val2014
+train_instances: ../dataset/coco2014/instances_train2014.json
+val_instances: ../dataset/coco2014/instances_val2014.json
+train_captions: ../dataset/coco2014/captions_train2014.json
+val_captions: ../dataset/coco2014/captions_val2014.json
+train_dir: ../dataset/coco2014/train2014
+val_dir: ../dataset/coco2014/val2014/
 
 # MODEL
-model_text: models/fasttext_wiki.en.bin
-embedding_size: 300  # must be 300 if using fasttext
+fasttext_path: models/best_task_c_a_10p.pt
+embedding_size: 768  # must be 300 if using fasttext
 
 # OPTIMIZER
 lr: 0.001
 max_lr: 0.01
 num_epochs: 10
 batch_size: 32
+
+# Inference
+database_path: results/database.npy

@@ -9,7 +9,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from week5.src.models import TripletNetIm2Text
+from week5.src.models import TripletNetIm2Text, TripletNetText2Im
 
 
 class TripletIm2Text(Dataset):
@@ -66,14 +66,16 @@ class TripletIm2Text(Dataset):
         if not self.evaluation:
             return image, positive_caption, negative_caption
         else:
-            return image, self.img2ann[img_id]
+            captions = self.img2ann[img_id][:5]
+            return image, captions
 
 
 class TripletText2Im(Dataset):
-    def __init__(self, ann_file, img_dir, phase, transform=None):
+    def __init__(self, ann_file, img_dir, phase, transform=None, evaluation=False):
         self.phase = phase
         self.img_dir = img_dir
         self.transform = transform
+        self.evaluation = evaluation
 
         with open(ann_file, 'r') as f:
             self.annotations = json.load(f)
@@ -121,7 +123,10 @@ class TripletText2Im(Dataset):
         # Lower case
         anchor_caption = anchor_caption.lower()
 
-        return anchor_caption, positive_img, negative_img
+        if not self.evaluation:
+            return anchor_caption, positive_img, negative_img
+        else:
+            return anchor_caption, positive_img_id
 
 
 def create_caption_db(model: TripletNetIm2Text, captions: Dict, out_path: str, device: str = 'cpu'):
@@ -142,6 +147,35 @@ def create_caption_db(model: TripletNetIm2Text, captions: Dict, out_path: str, d
     if not os.path.exists(os.path.dirname(out_path)):
         os.makedirs(os.path.dirname(out_path))
     caption_embeddings = np.array(caption_embeddings)
+    # Save the array to disk
+    np.save(out_path, caption_embeddings, allow_pickle=True)
+
+    return caption_embeddings
+
+
+def create_image_db(model: TripletNetText2Im, im_dict: Dict, im_dir: str, out_path: str, device: str = 'cpu', transform=None):
+    if os.path.isfile(out_path):
+        print("Loading embeddings from file")
+        return np.load(out_path, allow_pickle=True)
+
+    print("Retrieving dataset embeddings")
+
+    image_embeddings = []
+    for im_id, img_path in tqdm(im_dict.items()):
+        img = Image.open(f'{im_dir}/{img_path}').convert('RGB')
+        if transform is not None:
+            img = transform(img)
+        img = img.expand(1, -1, -1, -1)
+        img.to(device)
+        if device == 'cpu':
+            img_embedding = model.get_embedding_image(img)[0].detach().numpy()
+        else:
+            img_embedding = model.get_embedding_image(img)[0].cpu().detach().numpy()
+        image_embeddings.append((img_embedding, im_id))
+
+    if not os.path.exists(os.path.dirname(out_path)):
+        os.makedirs(os.path.dirname(out_path))
+    caption_embeddings = np.array(image_embeddings)
     # Save the array to disk
     np.save(out_path, caption_embeddings, allow_pickle=True)
 

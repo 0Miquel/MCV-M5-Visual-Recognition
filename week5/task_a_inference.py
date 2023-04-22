@@ -5,8 +5,9 @@ import sys
 import numpy as np
 import torch
 from PIL import Image
+from tqdm import tqdm
 
-from src.models import EmbeddingNetImage, EmbeddingNetText, TripletNetIm2Text
+from src.models import EmbeddingNetImage, EmbeddingNetText, TripletNetIm2Text, EmbeddingNetTextBERT
 from src.utils_io import load_yaml_config
 from week5.task_a import get_transforms
 
@@ -19,7 +20,7 @@ def image2text_inference(image_path, model, captions):
 
     # Compute cosine similarity between image embedding and all caption embeddings
     caption_embeddings = []
-    for caption in captions:
+    for caption in tqdm(captions):
         caption_embedding = model.get_embedding_text([caption])[0]
         caption_embeddings.append(caption_embedding)
     caption_embeddings = torch.Tensor(caption_embeddings)  # .to(model.device)
@@ -36,8 +37,8 @@ def image2text_inference(image_path, model, captions):
 
 def main(cfg):
     # MODEL
-    model = TripletNetIm2Text(EmbeddingNetImage(out_features=300),
-                              EmbeddingNetText(weights=cfg["fasttext_path"], out_features=300))
+    model = TripletNetIm2Text(EmbeddingNetImage(out_features=768),
+                              EmbeddingNetTextBERT(model_name='bert-base-uncased', out_features=768))
     model.load_state_dict(torch.load(cfg["save_path"]))
 
     # Load captions for the dataset

@@ -1,17 +1,17 @@
 # DATASET
-train_captions: /export/home/mcv/datasets/COCO/captions_train2014.js>
-val_captions: /export/home/mcv/datasets/COCO/captions_val2014.json
-train_dir: /export/home/mcv/datasets/COCO/train2014
-val_dir: /export/home/mcv/datasets/COCO/val2014
+train_captions: ../dataset/coco2014/captions_train2014.js>
+val_captions: ../dataset/coco2014/captions_val2014.json
+train_dir: ../dataset/coco2014/train2014
+val_dir: ../dataset/coco2014/val2014
 
 # MODEL
-device: cuda
-model_text: /export/home/mcv/m5/fasttext_wiki.en.bin
-model_path: /export/home/group02/MCV-M5-Visual-Recognition/week5/models/best_task_c_a_10p.pt
+device: cpu
+model_text: models/fasttext_wiki.en.bin
+model_path: models/best_task_a.pt
 
 # EVALUATION
-database_path: /export/home/group02/MCV-M5-Visual-Recognition/week5/results/bert_db.npy
-type: text2image
-visualize: False
-text_encoder: bert
+database_path: results/ft_im2text_db.npy
+type: im2text
+visualize: True
+text_encoder: ft
 batch_size: 32
