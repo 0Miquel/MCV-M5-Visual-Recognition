@@ -4,6 +4,7 @@ import random
 from typing import Dict
 
 import numpy as np
+import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -123,7 +124,7 @@ class TripletText2Im(Dataset):
         return anchor_caption, positive_img, negative_img
 
 
-def create_caption_db(model: TripletNetIm2Text, captions: Dict, out_path: str):
+def create_caption_db(model: TripletNetIm2Text, captions: Dict, out_path: str, device: torch.device = 'cpu'):
     if os.path.isfile(out_path):
         print("Loading embeddings from file")
         return np.load(out_path, allow_pickle=True)
@@ -132,7 +133,10 @@ def create_caption_db(model: TripletNetIm2Text, captions: Dict, out_path: str):
 
     caption_embeddings = []
     for cap_id, caption in tqdm(captions.items()):
-        caption_embedding = model.get_embedding_text([caption])[0].cpu().detach().numpy()
+        if device == 'cpu':
+            caption_embedding = model.get_embedding_text([caption])[0].detach().numpy()
+        else:
+            caption_embedding = model.get_embedding_text([caption])[0].cpu().detach().numpy()
         caption_embeddings.append([caption_embedding, cap_id])
 
     if not os.path.exists(os.path.dirname(out_path)):

@@ -75,13 +75,14 @@ def evaluate_im2text(
             for i, anchor_embedded in enumerate(anchor_embedding_b):
                 sim_scores = torch.nn.functional.cosine_similarity(anchor_embedded, db_tensor)
                 y_true_i = [int(captions_tensor[i].cpu().detach().numpy()) for captions_tensor in y_true_b]
-                pred_top_5 = np.argsort(sim_scores.cpu().detach().numpy())[:5]
-                pred_top_5_items = [db[j][1] for j in pred_top_5]
-                pred_captions = [captions_dict[i] for i in pred_top_5_items]
+                pred_top_10_items = np.argsort(sim_scores.cpu().detach().numpy())[:10][::-1]
+                pred_top_10_items = [db[j][1] for j in pred_top_10_items]
+                pred_captions = [captions_dict[i] for i in pred_top_10_items]
 
-                ap5_list.append(calculate_ap_at_5_im2text(y_true_i, y_pred=pred_top_5_items))
-                p1_list.append(calculate_precision_im2text(y_true_i, y_pred=pred_top_5_items, k_values=1))
-                p5_list.append(calculate_precision_im2text(y_true_i, y_pred=pred_top_5_items, k_values=5))
+                ap5_list.append(calculate_ap_at_5_im2text(y_true_i, y_pred=pred_top_10_items))
+                p1_list.append(calculate_precision_im2text(y_true_i, y_pred=pred_top_10_items, k_values=1))
+                p5_list.append(calculate_precision_im2text(y_true_i, y_pred=pred_top_10_items, k_values=5))
+                p5_list.append(calculate_precision_im2text(y_true_i, y_pred=pred_top_10_items, k_values=10))
 
                 if visualize:
                     # Visualize image and captions
@@ -98,7 +99,7 @@ def evaluate_im2text(
 
                     # Add the predicted captions to the bottom of the plot
                     text = "Predicted captions:\n"
-                    for j, caption in enumerate(pred_captions[::-1]):
+                    for j, caption in enumerate(pred_captions):
                         text += f"{j + 1}. {caption}\n"
                     ax.text(0.5, 1.05, text, transform=ax.transAxes, ha='center', va='bottom')
                     # Adjust the spacing

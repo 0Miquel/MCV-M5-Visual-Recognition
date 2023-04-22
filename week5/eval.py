@@ -14,14 +14,15 @@ from week5.task_a import get_transforms
 
 
 def evaluate(cfg):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if cfg['type'] == 'text2image':
         # MODEL
         if cfg['text_encoder'] == 'bert':
             model = TripletNetIm2Text(EmbeddingNetImage(out_features=768),
-                                      EmbeddingNetTextBERT(model_name='bert-base-uncased', out_features=768))
+                                      EmbeddingNetTextBERT(model_name='bert-base-uncased', out_features=768)).to(device)
         else:
             model = TripletNetIm2Text(EmbeddingNetImage(out_features=300),
-                                      EmbeddingNetText(weights=cfg['model_text'], out_features=300))
+                                      EmbeddingNetText(weights=cfg['model_text'], out_features=300)).to(device)
         model.load_state_dict(torch.load(cfg["model_path"]))
 
         # Load captions for the dataset
@@ -33,7 +34,7 @@ def evaluate(cfg):
         val_dataset = TripletIm2Text(cfg['val_captions'], cfg['val_dir'], transform=transform["val"], evaluation=True)
         val_dl = DataLoader(val_dataset, batch_size=cfg["batch_size"], shuffle=False)
         # Compute cosine similarity between image embedding and all caption embeddings
-        caption_db = create_caption_db(model=model, captions=captions, out_path=cfg['database_path'])
+        caption_db = create_caption_db(model=model, captions=captions, out_path=cfg['database_path'], device=device)
         # Evaluate
         evaluate_im2text(model, val_dl, caption_db, captions, cfg['visualize'])
     elif cfg['type'] == 'image2text':
