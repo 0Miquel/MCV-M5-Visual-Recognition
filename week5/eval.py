@@ -44,7 +44,7 @@ def evaluate(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='configs/eval.yaml')
+    parser.add_argument('--config', default='/export/home/group02/MCV-M5-Visual-Recognition/week5/configs/eval.yaml')
     args = parser.parse_args(sys.argv[1:])
     config_path = args.config
 
