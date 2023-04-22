@@ -7,10 +7,10 @@ val_dir: /export/home/mcv/datasets/COCO/val2014
 # MODEL
 device: cuda
 model_text: /export/home/mcv/m5/fasttext_wiki.en.bin
-model_path: models/best_task_a_10p.pt
+model_path: /export/home/group02/MCV-M5-Visual-Recognition/week5/models/best_task_a_10p.pt
 
 # EVALUATION
-database_path: results/fasttext_database.npy
+database_path: /export/home/group02/MCV-M5-Visual-Recognition/week5/results/fasttext_database.npy
 type: text2image
 visualize: False
 text_encoder: fasttext
