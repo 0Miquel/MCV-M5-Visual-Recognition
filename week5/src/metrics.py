@@ -107,7 +107,7 @@ def evaluate_im2text(
                         text += f"{j + 1}. {captions_dict[caption]}\n"
 
                     # Add the predicted captions to the bottom of the plot
-                    text = "Predicted captions:\n"
+                    text += "\nPredicted captions:\n"
                     for j, caption in enumerate(pred_captions):
                         text += f"{j + 1}. {caption}\n"
                     ax.text(0.5, 1.05, text, transform=ax.transAxes, ha='center', va='bottom')
