@@ -5,7 +5,7 @@ train_dir: /export/home/mcv/datasets/COCO/train2014
 val_dir: /export/home/mcv/datasets/COCO/val2014
 
 # MODEL
-device: cuda
+device: cpu
 model_text: /export/home/mcv/m5/fasttext_wiki.en.bin
 model_path: /export/home/group02/MCV-M5-Visual-Recognition/week5/models/best_task_a_10p.pt
 

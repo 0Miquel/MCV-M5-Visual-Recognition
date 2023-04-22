@@ -34,7 +34,12 @@ def evaluate(cfg):
         val_dataset = TripletIm2Text(cfg['val_captions'], cfg['val_dir'], transform=transform["val"], evaluation=True)
         val_dl = DataLoader(val_dataset, batch_size=cfg["batch_size"], shuffle=False)
         # Compute cosine similarity between image embedding and all caption embeddings
-        caption_db = create_caption_db(model=model, captions=captions, out_path=cfg['database_path'], device=device)
+        caption_db = create_caption_db(
+            model=model,
+            captions=captions,
+            out_path=cfg['database_path'],
+            device=cfg['device']
+        )
         # Evaluate
         evaluate_im2text(model, val_dl, caption_db, captions, cfg['visualize'])
     elif cfg['type'] == 'image2text':
