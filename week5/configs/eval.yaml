@@ -7,7 +7,7 @@ val_dir: /export/home/mcv/datasets/COCO/val2014
 # MODEL
 device: cuda
 model_text: /export/home/mcv/m5/fasttext_wiki.en.bin
-model_path: models/best_task_a.pt
+model_path: models/best_task_a_10p.pt
 
 # EVALUATION
 database_path: results/fasttext_database.npy
