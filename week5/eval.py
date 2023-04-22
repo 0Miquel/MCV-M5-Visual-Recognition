@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from week5.src.datasets import create_caption_db, TripletIm2Text
 from week5.src.metrics import evaluate_im2text
-from week5.src.models import TripletNetIm2Text, EmbeddingNetImage, EmbeddingNetTextBERT
+from week5.src.models import TripletNetIm2Text, EmbeddingNetImage, EmbeddingNetTextBERT, EmbeddingNetText
 from week5.src.utils_io import load_yaml_config
 from week5.task_a import get_transforms
 
@@ -16,8 +16,12 @@ from week5.task_a import get_transforms
 def evaluate(cfg):
     if cfg['type'] == 'text2image':
         # MODEL
-        model = TripletNetIm2Text(EmbeddingNetImage(out_features=768),
-                                  EmbeddingNetTextBERT(model_name='bert-base-uncased', out_features=768))
+        if cfg['text_encoder'] == 'bert':
+            model = TripletNetIm2Text(EmbeddingNetImage(out_features=768),
+                                      EmbeddingNetTextBERT(model_name='bert-base-uncased', out_features=768))
+        else:
+            model = TripletNetIm2Text(EmbeddingNetImage(out_features=300),
+                                      EmbeddingNetText(weights=cfg['model_text'], out_features=300))
         model.load_state_dict(torch.load(cfg["model_path"]))
 
         # Load captions for the dataset
