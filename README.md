@@ -9,6 +9,10 @@ Group 2 project of Visual Recognition at the Master in Computer Vision from UAB.
 In the following link you can find the visualization latex report of our group 2:
 https://www.overleaf.com/read/jhvhctdhpxkp
 
+## Final Presentation
+Link for the final presentation M5
+https://docs.google.com/presentation/d/1NJRXlq7O_Mx9ZrNx00Bv-KhJWc3BFqJDpFG89rfuhj0/edit?usp=sharing
+
 
 ## Week 1
 ### Train
@@ -62,10 +66,9 @@ python task_a.py
 In the following link you can find the read-only Google Slides presentation for this week:
 https://docs.google.com/presentation/d/1Wicc6TT8sVbltHl0nESWz1UxX_8PSeO7KW8COBSkgjk/edit?usp=sharing
 ## Week 4
-TODO
 
 ```
-cd week3
+cd week4
 python task_e.py
 ```
 ### Power Point Presentation
@@ -74,4 +77,11 @@ https://docs.google.com/presentation/d/1NuAMZuHNXXfummQBfeOsSC9dsxs2dcrOulw_pFho
 
 
 ## Week 5
-TODO
+```
+cd week5
+python task_a.py
+```
+
+### Power Point Presentation
+In the following link you can find the read-only Google Slides presentation for this week:
+https://docs.google.com/presentation/d/15Y6BcmU0pF1KHSJPR3W71xmezhZ812SjBFHPi4A4wb4/edit?usp=sharing
