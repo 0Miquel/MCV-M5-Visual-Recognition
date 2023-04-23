@@ -47,10 +47,10 @@ In the following link you can find the read-only Google Slides presentation for 
 https://docs.google.com/presentation/d/1whdoAJ6VHrrJ_RWEamB2IAcLW70gui0yw31goTlhJck/edit?usp=sharing
 
 ## Week 2 
-
+In order to execute a certain task, change configs/task_NUMTASK.yaml with your desired configuration:
 ```
 cd week2
-python task_e.py
+python task_NUMTASK.py
 ```
 
 ### Power Point Presentation
@@ -58,18 +58,19 @@ In the following link you can find the read-only Google Slides presentation for 
 https://docs.google.com/presentation/d/1NJRXlq7O_Mx9ZrNx00Bv-KhJWc3BFqJDpFG89rfuhj0/edit?usp=sharing
 
 ## Week 3
+In order to execute a certain task, change configs/task_NUMTASK.yaml with your desired configuration:
 ```
 cd week3
-python task_a.py
+python task_NUMTASK.py
 ```
 ### Power Point Presentation
 In the following link you can find the read-only Google Slides presentation for this week:
 https://docs.google.com/presentation/d/1Wicc6TT8sVbltHl0nESWz1UxX_8PSeO7KW8COBSkgjk/edit?usp=sharing
 ## Week 4
-
+In order to execute a certain task, change configs/task_NUMTASK.yaml with your desired configuration:
 ```
 cd week4
-python task_e.py
+python task_NUMTASK.py
 ```
 ### Power Point Presentation
 In the following link you can find the read-only Google Slides presentation for this week:
@@ -77,9 +78,10 @@ https://docs.google.com/presentation/d/1NuAMZuHNXXfummQBfeOsSC9dsxs2dcrOulw_pFho
 
 
 ## Week 5
+In order to execute a certain task, change configs/task_NUMTASK.yaml with your desired configuration:
 ```
 cd week5
-python task_a.py
+python task_NUMTASK.py
 ```
 
 ### Power Point Presentation
